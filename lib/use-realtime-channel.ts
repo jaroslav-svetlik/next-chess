@@ -102,5 +102,7 @@ export function useRealtimeChannel({
       handleStatusChange("disconnected");
       websocket?.close();
     };
-  }, [channel, enabled, handleMessage, handleStatusChange]);
+    // Effect Events intentionally stay out of the dependency list so the
+    // socket lifecycle is driven only by channel/enabled changes.
+  }, [channel, enabled]);
 }

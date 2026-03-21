@@ -8,6 +8,16 @@ Version source of truth:
 
 The project is still in `0.x`, so versions represent active alpha milestones and can change quickly.
 
+## [0.6.1] - 2026-03-21
+
+Production deployment release focused on the first live server rollout.
+
+### Changed
+
+- deployed NextChess live to `https://nextchess.org` with a PostgreSQL-backed production environment, systemd-managed web/worker services, and aaPanel nginx reverse proxy
+- updated [README.md](/Users/jaroslavsvetlik/Documents/NextJS/chess/README.md) with the live-site link and production-status note
+- bumped the runtime version in [package.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package.json) to reflect the first production deployment milestone
+
 ## [0.6.0] - 2026-03-21
 
 Public repository preparation release focused on GitHub readiness and project presentation.

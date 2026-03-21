@@ -5,7 +5,8 @@ NextChess is a real-time multiplayer chess platform built with Next.js for playe
 This repository is the public alpha codebase behind the project. The goal is not just a chessboard demo, but a complete chess product with matchmaking, replay archive, moderation, anti-cheat signals, and infrastructure that can keep growing.
 
 - Repository: [jaroslav-svetlik/next-chess](https://github.com/jaroslav-svetlik/next-chess)
-- Current version: `0.6.0`
+- Live site: [nextchess.org](https://nextchess.org)
+- Current version: `0.6.1`
 - Changelog: [CHANGELOG.md](./CHANGELOG.md)
 - Platform plan: [docs/chess-platform-plan.md](./docs/chess-platform-plan.md)
 - Release process: [docs/release-process.md](./docs/release-process.md)
@@ -173,4 +174,4 @@ If you want to support the project, collaborate, or sponsor development:
 
 ## Status
 
-NextChess is currently in public alpha. The codebase is active and moving fast while the gameplay, platform, and infrastructure layers are being hardened together.
+NextChess is currently in public alpha and now running live at [nextchess.org](https://nextchess.org). The codebase is active and moving fast while the gameplay, platform, and infrastructure layers are being hardened together.

@@ -8,6 +8,7 @@ import { authClient } from "@/lib/auth-client";
 import { ArenaChatPanel } from "@/components/home/arena-chat-panel";
 import {
   buildDemoHeaders,
+  buildDemoUrl,
   DEMO_IDENTITY_STORAGE_KEY,
   loadStoredDemoIdentity,
   type DemoIdentity
@@ -153,7 +154,7 @@ export function HomeArenaShell() {
   const actorName = actor?.name ?? session?.user?.name ?? null;
 
   async function loadGames(currentIdentity: DemoIdentity) {
-    const response = await fetch("/api/lobby", {
+    const response = await fetch(buildDemoUrl("/api/lobby", currentIdentity), {
       cache: "no-store",
       headers: buildDemoHeaders(currentIdentity)
     });
@@ -232,7 +233,7 @@ export function HomeArenaShell() {
     setControl(selectedControl);
 
     try {
-      const response = await fetch("/api/matchmaking/quick-pair", {
+      const response = await fetch(buildDemoUrl("/api/matchmaking/quick-pair", identity), {
         method: "POST",
         headers: buildDemoHeaders(identity),
         body: JSON.stringify({
@@ -259,7 +260,7 @@ export function HomeArenaShell() {
     setIsPending(true);
 
     try {
-      const response = await fetch(`/api/games/${gameId}/join`, {
+      const response = await fetch(buildDemoUrl(`/api/games/${gameId}/join`, identity), {
         method: "POST",
         headers: buildDemoHeaders(identity)
       });

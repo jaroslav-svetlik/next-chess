@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
-import { buildDemoHeaders, type DemoIdentity } from "@/lib/dev-auth";
+import { buildDemoHeaders, buildDemoUrl, type DemoIdentity } from "@/lib/dev-auth";
 import { useRealtimeChannel } from "@/lib/use-realtime-channel";
 
 type ArenaChatMessage = {
@@ -83,7 +83,7 @@ export function ArenaChatPanel({ actorId, actorName, actorType, identity }: Aren
   useEffect(() => {
     async function loadMessages() {
       try {
-        const response = await fetch("/api/chat/arena", {
+        const response = await fetch(buildDemoUrl("/api/chat/arena", identity), {
           cache: "no-store",
           headers: buildDemoHeaders(identity)
         });
@@ -176,7 +176,7 @@ export function ArenaChatPanel({ actorId, actorName, actorType, identity }: Aren
     submitInFlightRef.current = true;
 
     try {
-      const response = await fetch("/api/chat/arena", {
+      const response = await fetch(buildDemoUrl("/api/chat/arena", identity), {
         method: "POST",
         headers: {
           "content-type": "application/json",

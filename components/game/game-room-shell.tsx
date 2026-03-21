@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { LiveBoard } from "@/components/game/live-board";
-import { buildDemoHeaders, loadStoredDemoIdentity } from "@/lib/dev-auth";
+import { buildDemoHeaders, buildDemoUrl, loadStoredDemoIdentity } from "@/lib/dev-auth";
 import { useGameSoundEffects } from "@/lib/use-game-sound-effects";
 import { useRealtimeChannel } from "@/lib/use-realtime-channel";
 
@@ -249,12 +249,13 @@ export function GameRoomShell({ gameId }: GameRoomShellProps) {
     }
 
     try {
-      await fetch(`/api/games/${gameId}/presence`, {
+      const identity = loadStoredDemoIdentity();
+      await fetch(buildDemoUrl(`/api/games/${gameId}/presence`, identity), {
         method: "POST",
         keepalive: !connected,
         headers: {
           "content-type": "application/json",
-          ...buildDemoHeaders(loadStoredDemoIdentity())
+          ...buildDemoHeaders(identity)
         },
         body: JSON.stringify({
           connected,
@@ -280,10 +281,11 @@ export function GameRoomShell({ gameId }: GameRoomShellProps) {
     hasQueuedAutoCancelRef.current = true;
 
     try {
-      await fetch(`/api/games/${gameId}`, {
+      const identity = loadStoredDemoIdentity();
+      await fetch(buildDemoUrl(`/api/games/${gameId}`, identity), {
         method: "DELETE",
         keepalive: true,
-        headers: buildDemoHeaders(loadStoredDemoIdentity())
+        headers: buildDemoHeaders(identity)
       });
     } catch {
       hasQueuedAutoCancelRef.current = false;
@@ -291,9 +293,10 @@ export function GameRoomShell({ gameId }: GameRoomShellProps) {
   }
 
   async function loadGame() {
-    const response = await fetch(`/api/games/${gameId}`, {
+    const identity = loadStoredDemoIdentity();
+    const response = await fetch(buildDemoUrl(`/api/games/${gameId}`, identity), {
       cache: "no-store",
-      headers: buildDemoHeaders(loadStoredDemoIdentity())
+      headers: buildDemoHeaders(identity)
     });
     const payload = (await response.json()) as {
       game?: GameDetail;
@@ -608,9 +611,10 @@ export function GameRoomShell({ gameId }: GameRoomShellProps) {
     setIsJoining(true);
 
     try {
-      const response = await fetch(`/api/games/${gameId}/join`, {
+      const identity = loadStoredDemoIdentity();
+      const response = await fetch(buildDemoUrl(`/api/games/${gameId}/join`, identity), {
         method: "POST",
-        headers: buildDemoHeaders(loadStoredDemoIdentity())
+        headers: buildDemoHeaders(identity)
       });
       const payload = (await response.json()) as { game?: GameDetail; error?: string };
 
@@ -643,10 +647,11 @@ export function GameRoomShell({ gameId }: GameRoomShellProps) {
     setError(null);
 
     try {
-      const response = await fetch(`/api/games/${gameId}/move`, {
+      const identity = loadStoredDemoIdentity();
+      const response = await fetch(buildDemoUrl(`/api/games/${gameId}/move`, identity), {
         method: "POST",
         headers: {
-          ...buildDemoHeaders(loadStoredDemoIdentity())
+          ...buildDemoHeaders(identity)
         },
         body: JSON.stringify({
           from: move.from,
@@ -678,9 +683,10 @@ export function GameRoomShell({ gameId }: GameRoomShellProps) {
     setIsSubmittingMove(true);
 
     try {
-      const response = await fetch(`/api/games/${gameId}/resign`, {
+      const identity = loadStoredDemoIdentity();
+      const response = await fetch(buildDemoUrl(`/api/games/${gameId}/resign`, identity), {
         method: "POST",
-        headers: buildDemoHeaders(loadStoredDemoIdentity())
+        headers: buildDemoHeaders(identity)
       });
       const payload = (await response.json()) as { game?: GameDetail; error?: string };
 
@@ -702,9 +708,10 @@ export function GameRoomShell({ gameId }: GameRoomShellProps) {
     hasQueuedAutoCancelRef.current = true;
 
     try {
-      const response = await fetch(`/api/games/${gameId}`, {
+      const identity = loadStoredDemoIdentity();
+      const response = await fetch(buildDemoUrl(`/api/games/${gameId}`, identity), {
         method: "DELETE",
-        headers: buildDemoHeaders(loadStoredDemoIdentity())
+        headers: buildDemoHeaders(identity)
       });
       const payload = (await response.json()) as { game?: GameDetail; error?: string };
 

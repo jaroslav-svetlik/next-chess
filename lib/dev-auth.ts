@@ -50,6 +50,15 @@ export function buildDemoQuery(identity: DemoIdentity) {
   return searchParams.toString();
 }
 
+export function buildDemoUrl(path: string, identity: DemoIdentity) {
+  const query = buildDemoQuery(identity);
+  if (!query) {
+    return path;
+  }
+
+  return `${path}${path.includes("?") ? "&" : "?"}${query}`;
+}
+
 export function loadStoredDemoIdentity() {
   if (typeof window === "undefined") {
     return DEFAULT_DEMO_IDENTITY;

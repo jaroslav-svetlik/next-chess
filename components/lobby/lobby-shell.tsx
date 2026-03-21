@@ -7,6 +7,7 @@ import { authClient } from "@/lib/auth-client";
 import { OpenGamesList } from "@/components/lobby/open-games-list";
 import {
   buildDemoHeaders,
+  buildDemoUrl,
   DEMO_IDENTITY_STORAGE_KEY,
   loadStoredDemoIdentity,
   type DemoIdentity
@@ -114,7 +115,7 @@ export function LobbyShell() {
   }, [actor, games]);
 
   async function loadGames(currentIdentity: DemoIdentity) {
-    const response = await fetch("/api/lobby", {
+    const response = await fetch(buildDemoUrl("/api/lobby", currentIdentity), {
       cache: "no-store",
       headers: buildDemoHeaders(currentIdentity)
     });
@@ -199,7 +200,7 @@ export function LobbyShell() {
     setIsPending(true);
 
     try {
-      const response = await fetch("/api/games", {
+      const response = await fetch(buildDemoUrl("/api/games", identity), {
         method: "POST",
         headers: buildDemoHeaders(identity),
         body: JSON.stringify({
@@ -229,7 +230,7 @@ export function LobbyShell() {
     setIsPending(true);
 
     try {
-      const response = await fetch(`/api/games/${gameId}/join`, {
+      const response = await fetch(buildDemoUrl(`/api/games/${gameId}/join`, identity), {
         method: "POST",
         headers: buildDemoHeaders(identity)
       });

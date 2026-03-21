@@ -8,6 +8,18 @@ Version source of truth:
 
 The project is still in `0.x`, so versions represent active alpha milestones and can change quickly.
 
+## [0.6.7] - 2026-03-21
+
+Production guest-matchmaking hotfix focused on resilient guest identity transport.
+
+### Fixed
+
+- updated [lib/dev-auth.ts](/Users/jaroslavsvetlik/Documents/NextJS/chess/lib/dev-auth.ts) with a shared guest-query helper, then wired [components/home/home-arena-shell.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/home/home-arena-shell.tsx), [components/lobby/lobby-shell.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/lobby/lobby-shell.tsx), [components/home/arena-chat-panel.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/home/arena-chat-panel.tsx), and [components/game/game-room-shell.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/game/game-room-shell.tsx) so guest identity now travels in the request URL as well as headers, preventing production guest flows from failing when custom headers are stripped or dropped
+
+### Changed
+
+- bumped the runtime version in [package.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package.json) to `0.6.7`, updated the root package version in [package-lock.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package-lock.json), and refreshed the reported version in [README.md](/Users/jaroslavsvetlik/Documents/NextJS/chess/README.md)
+
 ## [0.6.6] - 2026-03-21
 
 Documentation release focused on making release docs consistent and English-only.

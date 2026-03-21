@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS "AppSetting" (
+  "key" TEXT PRIMARY KEY,
+  "value" TEXT NOT NULL,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS "app_setting_updated_at_idx"
+  ON "AppSetting" ("updatedAt");

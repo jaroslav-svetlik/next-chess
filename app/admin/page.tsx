@@ -5,7 +5,9 @@ import {
   AdminAccessRestricted,
   AdminStatCard
 } from "@/components/admin/admin-primitives";
+import { GuestChatControls } from "@/components/admin/guest-chat-controls";
 import { canAccessAdmin, getAdminDashboardData, getAdminEmailHint } from "@/lib/admin";
+import { getArenaChatGuestPostingEnabled } from "@/lib/site-settings";
 import { getSession } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -63,6 +65,7 @@ export default async function AdminOverviewPage({
     : resolvedSearchParams?.period;
   const periodDays = rawPeriod === "7" || rawPeriod === "90" ? Number(rawPeriod) : 30;
   const data = await getAdminDashboardData(periodDays);
+  const guestChatEnabled = await getArenaChatGuestPostingEnabled();
 
   return (
     <div className="admin-surface">
@@ -120,6 +123,26 @@ export default async function AdminOverviewPage({
               <strong>Activity</strong>
               <span>Recent games and moderator actions</span>
             </Link>
+          </div>
+        </section>
+      </section>
+
+      <section className="admin-grid admin-grid-two">
+        <GuestChatControls initialEnabled={guestChatEnabled} />
+        <section className="admin-list-panel admin-surface-panel">
+          <div className="panel-kicker">Policy</div>
+          <h2 className="feature-title admin-panel-title">Anonymous access</h2>
+          <div className="admin-simple-list">
+            <div className="admin-simple-row">
+              <strong>Guest matchmaking</strong>
+              <span>Enabled in production through `GuestIdentity` guest sessions.</span>
+            </div>
+            <div className="admin-simple-row">
+              <strong>Guest arena chat</strong>
+              <span>
+                Keep this enabled during alpha for easier onboarding, then lock it down when moderation pressure rises.
+              </span>
+            </div>
           </div>
         </section>
       </section>

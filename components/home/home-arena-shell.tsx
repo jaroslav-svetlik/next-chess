@@ -431,7 +431,12 @@ export function HomeArenaShell() {
       </div>
 
       {hasMounted ? (
-        <ArenaChatPanel actorId={actor?.id ?? null} actorName={actorName} identity={identity} />
+        <ArenaChatPanel
+          actorId={actor?.id ?? null}
+          actorName={actorName}
+          actorType={actor?.actorType ?? null}
+          identity={identity}
+        />
       ) : (
         <aside className="home-chat-shell glass-panel">
           <div className="home-chat-head">

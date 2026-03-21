@@ -260,3 +260,12 @@ model BackgroundJob {
   @@index([status, runAt], map: "background_job_status_run_at_idx")
   @@index([type, status, runAt], map: "background_job_type_status_run_at_idx")
 }
+
+model AppSetting {
+  key       String   @id
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([updatedAt], map: "app_setting_updated_at_idx")
+}

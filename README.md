@@ -6,7 +6,7 @@ This repository is the public alpha codebase behind the project. The goal is not
 
 - Repository: [jaroslav-svetlik/next-chess](https://github.com/jaroslav-svetlik/next-chess)
 - Live site: [nextchess.org](https://nextchess.org)
-- Current version: `0.6.3`
+- Current version: `0.6.4`
 - Changelog: [CHANGELOG.md](./CHANGELOG.md)
 - Platform plan: [docs/chess-platform-plan.md](./docs/chess-platform-plan.md)
 - Release process: [docs/release-process.md](./docs/release-process.md)
@@ -21,6 +21,7 @@ What you can already test there:
 
 - quick pair and lobby flow
 - guest and registered account play, including live guest matchmaking on production
+- arena chat for both guests and registered users during alpha, with admin guest-chat override
 - public leaderboard and player profiles
 - replay archive and PGN review
 - admin and moderation tooling once admin access is configured
@@ -31,6 +32,7 @@ Many chess side projects stop at "move pieces on a board." NextChess is being bu
 
 - instant play from the home screen
 - separate guest and registered ecosystems
+- guest arena chat during alpha with admin-controlled anonymous posting
 - server-authoritative gameplay and clock rules
 - public usernames, profiles, ladders, and replay pages
 - moderation and anti-cheat foundations
@@ -153,6 +155,7 @@ The public alpha already includes:
 
 - quick pair, lobby, and waiting-room flow
 - guest play and registered account play
+- shared arena chat for guests and registered users, with admin guest-posting toggle
 - separate matchmaking pools for guests and registered users
 - public usernames, profiles, leaderboard, and archive replay
 - WebSocket live sync

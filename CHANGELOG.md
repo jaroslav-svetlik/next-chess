@@ -8,6 +8,18 @@ Version source of truth:
 
 The project is still in `0.x`, so versions represent active alpha milestones and can change quickly.
 
+## [0.6.4] - 2026-03-21
+
+Production guest-chat release focused on anonymous arena chat and admin guest-posting control.
+
+### Changed
+
+- added an `AppSetting` model in [prisma/schema.prisma](/Users/jaroslavsvetlik/Documents/NextJS/chess/prisma/schema.prisma), plus [lib/site-settings.ts](/Users/jaroslavsvetlik/Documents/NextJS/chess/lib/site-settings.ts) and [scripts/sql/add_app_settings_schema.sql](/Users/jaroslavsvetlik/Documents/NextJS/chess/scripts/sql/add_app_settings_schema.sql), so runtime feature flags can be stored in the database instead of being hardcoded
+- updated [app/api/chat/arena/route.ts](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/api/chat/arena/route.ts) so arena chat now returns the guest-posting policy in its payload and blocks anonymous posting only when the admin toggle disables it
+- updated [components/home/arena-chat-panel.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/home/arena-chat-panel.tsx) and [components/home/home-arena-shell.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/home/home-arena-shell.tsx) so guests can post in arena chat during alpha, see a clear disabled state when anonymous posting is turned off, and receive live chat-settings updates
+- added [app/api/admin/settings/guest-chat/route.ts](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/api/admin/settings/guest-chat/route.ts) and [components/admin/guest-chat-controls.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/admin/guest-chat-controls.tsx), then wired them into [app/admin/page.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/admin/page.tsx), so admins can explicitly enable or disable guest arena chat without redeploying
+- bumped the runtime version in [package.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package.json) and refreshed [README.md](/Users/jaroslavsvetlik/Documents/NextJS/chess/README.md) to reflect production guest chat support and the admin override
+
 ## [0.6.3] - 2026-03-21
 
 Production guest-play release focused on real anonymous matchmaking outside development.

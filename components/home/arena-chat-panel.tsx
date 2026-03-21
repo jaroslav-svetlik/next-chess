@@ -19,6 +19,7 @@ type ArenaChatMessage = {
 type ArenaChatPanelProps = {
   actorId: string | null;
   actorName: string | null;
+  actorType: "user" | "guest" | null;
   identity: DemoIdentity;
 };
 
@@ -38,19 +39,20 @@ function getChatInitials(name: string) {
     .join("");
 }
 
-export function ArenaChatPanel({ actorId, actorName, identity }: ArenaChatPanelProps) {
+export function ArenaChatPanel({ actorId, actorName, actorType, identity }: ArenaChatPanelProps) {
   const [messages, setMessages] = useState<ArenaChatMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
+  const [guestPostingEnabled, setGuestPostingEnabled] = useState(true);
   const [cooldownUntil, setCooldownUntil] = useState(0);
   const [cooldownTick, setCooldownTick] = useState(0);
   const submitInFlightRef = useRef(false);
   const feedRef = useRef<HTMLDivElement | null>(null);
   const shouldPinToBottomRef = useRef(true);
 
-  const canPost = Boolean(actorId);
+  const canPost = Boolean(actorId) && (actorType !== "guest" || guestPostingEnabled);
   const cooldownRemainingMs = Math.max(0, cooldownUntil - cooldownTick);
   const isComposerDisabled = !hasMounted || !canPost || isSending || cooldownRemainingMs > 0;
 
@@ -87,6 +89,7 @@ export function ArenaChatPanel({ actorId, actorName, identity }: ArenaChatPanelP
         });
         const payload = (await response.json()) as {
           messages?: ArenaChatMessage[];
+          guestPostingEnabled?: boolean;
           error?: string;
         };
 
@@ -95,6 +98,7 @@ export function ArenaChatPanel({ actorId, actorName, identity }: ArenaChatPanelP
         }
 
         setMessages(payload.messages ?? []);
+        setGuestPostingEnabled(payload.guestPostingEnabled ?? true);
       } catch (loadError) {
         setError(loadError instanceof Error ? loadError.message : "Arena chat is unavailable.");
       }
@@ -106,6 +110,27 @@ export function ArenaChatPanel({ actorId, actorName, identity }: ArenaChatPanelP
   useRealtimeChannel({
     channel: "arena-chat",
     onMessage: (message) => {
+      if (message.type === "arena_chat_settings") {
+        const nextGuestPostingEnabled =
+          typeof (message as { guestPostingEnabled?: unknown }).guestPostingEnabled === "boolean"
+            ? Boolean((message as { guestPostingEnabled?: boolean }).guestPostingEnabled)
+            : null;
+
+        if (nextGuestPostingEnabled !== null) {
+          setGuestPostingEnabled(nextGuestPostingEnabled);
+          if (actorType === "guest" && !nextGuestPostingEnabled) {
+            setError("Guest posting is currently disabled by admin.");
+          }
+          if (nextGuestPostingEnabled) {
+            setError((current) =>
+              current === "Guest posting is currently disabled by admin." ? null : current
+            );
+          }
+        }
+
+        return;
+      }
+
       const incomingMessage = (message as { message?: ArenaChatMessage }).message;
       if (message.type !== "arena_chat" || !incomingMessage) {
         return;
@@ -172,7 +197,14 @@ export function ArenaChatPanel({ actorId, actorName, identity }: ArenaChatPanelP
       setDraft("");
       setCooldownUntil(Date.now() + 2_000);
     } catch (submissionError) {
-      setError(submissionError instanceof Error ? submissionError.message : "Unable to send message.");
+      const nextError =
+        submissionError instanceof Error ? submissionError.message : "Unable to send message.";
+
+      if (nextError === "Guest posting is currently disabled in arena chat.") {
+        setGuestPostingEnabled(false);
+      }
+
+      setError(nextError);
     } finally {
       setIsSending(false);
       submitInFlightRef.current = false;
@@ -200,7 +232,9 @@ export function ArenaChatPanel({ actorId, actorName, identity }: ArenaChatPanelP
         <span>
           {canPost
             ? "Instant updates for everyone in the arena."
-            : "Join with a guest or account identity to post."}
+            : actorType === "guest" && !guestPostingEnabled
+              ? "Guest posting is currently disabled by admin."
+              : "Join with a guest or account identity to post."}
         </span>
       </div>
 

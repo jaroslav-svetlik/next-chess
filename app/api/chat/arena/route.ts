@@ -1,11 +1,59 @@
 import { listArenaChatMessages, postArenaChatMessage } from "@/lib/arena-chat";
 import { getRequestActor } from "@/lib/request-actor";
+import { getArenaChatGuestPostingEnabled } from "@/lib/site-settings";
 
 export const dynamic = "force-dynamic";
 
+function getArenaChatErrorStatus(code: string) {
+  switch (code) {
+    case "EMPTY_MESSAGE":
+    case "LINKS_BLOCKED":
+    case "PLAIN_TEXT_ONLY":
+      return 400;
+    case "ACCOUNT_RESTRICTED":
+    case "GUEST_CHAT_DISABLED":
+      return 403;
+    case "RATE_LIMITED":
+    case "SPAM_BLOCKED":
+    case "DUPLICATE_MESSAGE":
+    case "REQUEST_IN_FLIGHT":
+      return 429;
+    default:
+      return 500;
+  }
+}
+
+function getArenaChatErrorMessage(code: string) {
+  switch (code) {
+    case "EMPTY_MESSAGE":
+      return "Message cannot be empty.";
+    case "LINKS_BLOCKED":
+      return "Links, emails and formatted content are blocked in arena chat.";
+    case "PLAIN_TEXT_ONLY":
+      return "Arena chat accepts only ordinary plain text.";
+    case "ACCOUNT_RESTRICTED":
+      return "This account is restricted from posting in chat.";
+    case "GUEST_CHAT_DISABLED":
+      return "Guest posting is currently disabled in arena chat.";
+    case "RATE_LIMITED":
+      return "You can send one message every 2 seconds.";
+    case "SPAM_BLOCKED":
+      return "Too many messages in a short period. Slow down.";
+    case "DUPLICATE_MESSAGE":
+      return "Do not repeat the same message.";
+    case "REQUEST_IN_FLIGHT":
+      return "Previous chat request is still being processed.";
+    default:
+      return "Chat message could not be sent.";
+  }
+}
+
 export async function GET() {
+  const guestPostingEnabled = await getArenaChatGuestPostingEnabled();
+
   return Response.json({
-    messages: listArenaChatMessages()
+    messages: listArenaChatMessages(),
+    guestPostingEnabled
   });
 }
 
@@ -23,6 +71,17 @@ export async function POST(request: Request) {
       );
     }
 
+    if (actor.actorType === "guest" && !(await getArenaChatGuestPostingEnabled())) {
+      return Response.json(
+        {
+          error: "Guest posting is currently disabled in arena chat."
+        },
+        {
+          status: 403
+        }
+      );
+    }
+
     const payload = (await request.json()) as {
       text?: string;
     };
@@ -34,43 +93,13 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
-    const status =
-      message === "EMPTY_MESSAGE" ||
-      message === "LINKS_BLOCKED" ||
-      message === "PLAIN_TEXT_ONLY"
-        ? 400
-        : message === "ACCOUNT_RESTRICTED"
-          ? 403
-          : message === "RATE_LIMITED" ||
-              message === "SPAM_BLOCKED" ||
-              message === "DUPLICATE_MESSAGE" ||
-              message === "REQUEST_IN_FLIGHT"
-            ? 429
-            : 500;
 
     return Response.json(
       {
-        error:
-          message === "EMPTY_MESSAGE"
-            ? "Message cannot be empty."
-            : message === "LINKS_BLOCKED"
-              ? "Links, emails and formatted content are blocked in arena chat."
-              : message === "PLAIN_TEXT_ONLY"
-                ? "Arena chat accepts only ordinary plain text."
-            : message === "ACCOUNT_RESTRICTED"
-              ? "This account is restricted from posting in chat."
-              : message === "RATE_LIMITED"
-                ? "You can send one message every 2 seconds."
-                : message === "SPAM_BLOCKED"
-                  ? "Too many messages in a short period. Slow down."
-                  : message === "DUPLICATE_MESSAGE"
-                    ? "Do not repeat the same message."
-                    : message === "REQUEST_IN_FLIGHT"
-                      ? "Previous chat request is still being processed."
-              : "Chat message could not be sent."
+        error: getArenaChatErrorMessage(message)
       },
       {
-        status
+        status: getArenaChatErrorStatus(message)
       }
     );
   }

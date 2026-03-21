@@ -259,7 +259,7 @@ export function LobbyShell() {
         <p className="panel-copy">
           {session?.user
             ? `Signed in as ${session.user.name}. Your real account session now takes priority over guest mode.`
-            : "Anonymous lobby sa instant create/join tokom. Guest igraci sada vide i join-uju samo guest partije."}
+            : "Anonymous lobby with instant create/join flow. Guests now only see and join guest tables."}
         </p>
         {actor?.moderationStatus === "RESTRICTED" ? (
           <p className="notice danger">
@@ -286,13 +286,13 @@ export function LobbyShell() {
           {session?.user ? (
             <p className="muted">
               {actor?.moderationStatus === "WATCH" || actor?.moderationStatus === "REVIEW"
-                ? "Real account session je aktivan, ali rated play je trenutno ogranicen na casual tokove."
-                : "Real account session je aktivan. Ovo je baza za ranked, profile i statistiku."}
+                ? "Real account session is active, but rated play is currently limited to casual tables."
+                : "Real account session is active. This is the foundation for rated play, profiles, and stats."}
             </p>
           ) : (
             <p className="muted">
-              Guest mode je aktivan. Ovaj browser tab koristi sopstveni anonimni guest identitet,
-              tako da mozes odmah da pravis i join-ujes guest partije bez registracije.
+              Guest mode is active. This browser tab uses its own anonymous guest identity, so
+              you can create and join guest tables immediately without registering.
             </p>
           )}
           <div className="field">

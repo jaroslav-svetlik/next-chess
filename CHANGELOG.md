@@ -20,6 +20,15 @@ Production guest-chat release focused on anonymous arena chat and admin guest-po
 - added [app/api/admin/settings/guest-chat/route.ts](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/api/admin/settings/guest-chat/route.ts) and [components/admin/guest-chat-controls.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/admin/guest-chat-controls.tsx), then wired them into [app/admin/page.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/admin/page.tsx), so admins can explicitly enable or disable guest arena chat without redeploying
 - bumped the runtime version in [package.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package.json) and refreshed [README.md](/Users/jaroslavsvetlik/Documents/NextJS/chess/README.md) to reflect production guest chat support and the admin override
 
+## [0.6.5] - 2026-03-21
+
+Patch release focused on removing Serbian UI copy from the app.
+
+### Changed
+
+- replaced remaining Serbian user-facing strings in [components/lobby/lobby-shell.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/lobby/lobby-shell.tsx), [app/auth/login/page.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/auth/login/page.tsx), [app/auth/register/page.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/auth/register/page.tsx), and [app/game/[gameId]/page.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/game/[gameId]/page.tsx) with English-only copy
+- synced release metadata by bumping [package.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package.json) to `0.6.5`, updating the root package identity/version in [package-lock.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package-lock.json), and recording this patch in the changelog
+
 ## [0.6.3] - 2026-03-21
 
 Production guest-play release focused on real anonymous matchmaking outside development.

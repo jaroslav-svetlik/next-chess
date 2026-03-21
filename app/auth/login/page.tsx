@@ -10,21 +10,21 @@ export default function LoginPage() {
           <span className="panel-kicker">Sign In</span>
           <h1 className="panel-title">Return to the board.</h1>
           <p className="panel-copy">
-            Email/password auth je povezan na Better Auth client API, spreman za backend session
-            flow kada se env i baza podignu.
+            Email/password auth is wired to the Better Auth client API and ready for the backend
+            session flow once the environment and database are configured.
           </p>
           <AuthForm mode="login" />
           <p className="muted">
-            Nemate nalog? <Link href="/auth/register">Create account</Link>
+            Don't have an account? <Link href="/auth/register">Create account</Link>
           </p>
         </section>
 
         <aside className="auth-side">
           <span className="panel-kicker">Why this matters</span>
           <ul className="list-clean">
-            <li>Sessions ce cuvati pristup lobby-u i game akcijama.</li>
-            <li>Profile, istorija i invite ownership polaze od stabilnog user modela.</li>
-            <li>Auth foundation ide pre realtime sloja da ne jurimo security rupe kasnije.</li>
+            <li>Sessions keep access to the lobby and game actions stable.</li>
+            <li>Profiles, history, and invite ownership all depend on a stable user model.</li>
+            <li>The auth foundation comes before the realtime layer so security is not bolted on later.</li>
           </ul>
         </aside>
       </div>

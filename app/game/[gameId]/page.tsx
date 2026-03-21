@@ -13,8 +13,8 @@ export default async function GamePage({
         <span className="panel-kicker">Game Room</span>
         <h1 className="panel-title">Match {gameId.toUpperCase()}</h1>
         <p className="panel-copy">
-          Room sada cita stvarni backend status partije. Waiting i active flow su odvojeni i spremni
-          za sledeci realtime gameplay sloj.
+          This room now reads the live backend game state. Waiting and active flows are separated
+          and ready for the next realtime gameplay layer.
         </p>
       </div>
       <div style={{ height: "1.5rem" }} />

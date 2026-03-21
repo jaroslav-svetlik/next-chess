@@ -15,16 +15,16 @@ export default function RegisterPage() {
           </p>
           <AuthForm mode="register" />
           <p className="muted">
-            Vec imate nalog? <Link href="/auth/login">Sign in</Link>
+            Already have an account? <Link href="/auth/login">Sign in</Link>
           </p>
         </section>
 
         <aside className="auth-side">
           <span className="panel-kicker">Platform goals</span>
           <ul className="list-clean">
-            <li>Public i private game creation.</li>
-            <li>Bullet, blitz, rapid i custom kontrole.</li>
-            <li>Istorija partija i competitive systems spremni za sledece faze.</li>
+            <li>Public and private game creation.</li>
+            <li>Bullet, blitz, rapid, and custom controls.</li>
+            <li>Game history and competitive systems are ready for the next phase.</li>
           </ul>
         </aside>
       </div>

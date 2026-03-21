@@ -17,7 +17,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>
+      <body suppressHydrationWarning>
         <div className="page-shell">
           <header className="site-header">
             <Link href="/" className="brand-mark">

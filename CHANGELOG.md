@@ -8,6 +8,19 @@ Version source of truth:
 
 The project is still in `0.x`, so versions represent active alpha milestones and can change quickly.
 
+## [0.6.8] - 2026-03-21
+
+Production cache and realtime hotfix focused on preventing stale page shells and noisy websocket failures.
+
+### Fixed
+
+- updated [app/page.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/page.tsx) and [app/lobby/page.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/lobby/page.tsx) to `force-dynamic`, so the home and lobby shells are no longer served as long-lived static HTML and production can pick up fresh client bundles after deploys instead of holding on to stale guest-matchmaking code
+- updated [lib/use-realtime-channel.ts](/Users/jaroslavsvetlik/Documents/NextJS/chess/lib/use-realtime-channel.ts) so websocket errors no longer force `close()` during the initial connecting phase, removing the browser-side `WebSocket is closed before the connection is established` noise caused by the client itself
+
+### Changed
+
+- bumped the runtime version in [package.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package.json) to `0.6.8`, updated the root package version in [package-lock.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package-lock.json), and refreshed the reported version in [README.md](/Users/jaroslavsvetlik/Documents/NextJS/chess/README.md)
+
 ## [0.6.7] - 2026-03-21
 
 Production guest-matchmaking hotfix focused on resilient guest identity transport.

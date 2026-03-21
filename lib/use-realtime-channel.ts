@@ -75,7 +75,8 @@ export function useRealtimeChannel({
       };
 
       websocket.onerror = () => {
-        websocket?.close();
+        // Let the browser drive the close lifecycle. Forcing close() while the
+        // socket is still connecting creates noisy production console errors.
       };
 
       websocket.onclose = () => {

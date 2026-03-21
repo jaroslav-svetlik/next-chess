@@ -6,10 +6,24 @@ This repository is the public alpha codebase behind the project. The goal is not
 
 - Repository: [jaroslav-svetlik/next-chess](https://github.com/jaroslav-svetlik/next-chess)
 - Live site: [nextchess.org](https://nextchess.org)
-- Current version: `0.6.1`
+- Current version: `0.6.2`
 - Changelog: [CHANGELOG.md](./CHANGELOG.md)
 - Platform plan: [docs/chess-platform-plan.md](./docs/chess-platform-plan.md)
 - Release process: [docs/release-process.md](./docs/release-process.md)
+
+## Live Demo
+
+You can try the current public alpha here:
+
+- Demo URL: [https://nextchess.org](https://nextchess.org)
+
+What you can already test there:
+
+- quick pair and lobby flow
+- guest and registered account play
+- public leaderboard and player profiles
+- replay archive and PGN review
+- admin and moderation tooling once admin access is configured
 
 ## Why This Project
 

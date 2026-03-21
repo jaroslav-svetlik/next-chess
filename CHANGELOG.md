@@ -8,6 +8,15 @@ Version source of truth:
 
 The project is still in `0.x`, so versions represent active alpha milestones and can change quickly.
 
+## [0.6.2] - 2026-03-21
+
+Documentation release focused on clearer public demo visibility.
+
+### Changed
+
+- updated [README.md](/Users/jaroslavsvetlik/Documents/NextJS/chess/README.md) to call out the live demo URL `https://nextchess.org` near the top of the repository page
+- bumped the runtime version in [package.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package.json) to reflect the public README refresh
+
 ## [0.6.1] - 2026-03-21
 
 Production deployment release focused on the first live server rollout.

@@ -1,0 +1,38 @@
+{
+  "name": "nextchess",
+  "version": "0.6.0",
+  "private": true,
+  "scripts": {
+    "dev": "node server.js",
+    "build": "next build --webpack",
+    "start": "NODE_ENV=production node server.js",
+    "worker": "node --experimental-strip-types worker.ts",
+    "typecheck": "next typegen && tsc --noEmit",
+    "prisma:generate": "prisma generate",
+    "prisma:push": "prisma db push",
+    "auth:generate": "npx @better-auth/cli@latest generate --config lib/auth.ts"
+  },
+  "dependencies": {
+    "@better-auth/prisma-adapter": "^1.5.5",
+    "@prisma/adapter-pg": "^7.5.0",
+    "@prisma/client": "^7.5.0",
+    "@tailwindcss/postcss": "^4.2.2",
+    "better-auth": "^1.5.5",
+    "chess.js": "^1.4.0",
+    "dotenv": "^17.2.3",
+    "next": "^16.2.0",
+    "pg": "^8.20.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "stockfish": "^18.0.5",
+    "tailwindcss": "^4.2.2",
+    "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "prisma": "^7.5.0",
+    "typescript": "^5.9.3"
+  }
+}

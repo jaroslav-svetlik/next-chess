@@ -1,0 +1,262 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum GameStatus {
+  WAITING
+  ACTIVE
+  FINISHED
+  CANCELLED
+}
+
+enum GameVisibility {
+  PUBLIC
+  PRIVATE
+}
+
+enum TimeCategory {
+  BULLET
+  BLITZ
+  RAPID
+  CUSTOM
+}
+
+enum PlayerColor {
+  WHITE
+  BLACK
+}
+
+enum ModerationStatus {
+  CLEAN
+  OBSERVE
+  WATCH
+  REVIEW
+  RESTRICTED
+}
+
+enum BackgroundJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model User {
+  id           String         @id @default(cuid())
+  name         String
+  email        String         @unique
+  emailVerified Boolean       @default(false)
+  image        String?
+  username     String?        @unique
+  displayName  String?
+  avatarUrl    String?
+  ratingRapid  Int            @default(1200)
+  ratingBlitz  Int            @default(1200)
+  ratingBullet Int            @default(1200)
+  moderationStatus ModerationStatus @default(CLEAN)
+  moderationUpdatedAt DateTime?
+  moderationUpdatedByEmail String?
+  createdGames Game[]         @relation("GamesCreated")
+  gamePlayers  GamePlayer[]
+  moves        Move[]
+  moderationEvents UserModerationEvent[]
+  sessions     Session[]
+  accounts     Account[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([createdAt], map: "user_created_at_idx")
+  @@index([ratingBullet], map: "user_rating_bullet_idx")
+  @@index([ratingBlitz], map: "user_rating_blitz_idx")
+  @@index([ratingRapid], map: "user_rating_rapid_idx")
+  @@index([moderationStatus, updatedAt], map: "user_moderation_status_idx")
+}
+
+model GuestIdentity {
+  id             String      @id @default(cuid())
+  key            String      @unique
+  name           String
+  email          String?
+  createdGames   Game[]      @relation("GamesCreatedByGuest")
+  gamePlayers    GamePlayer[]
+  moves          Move[]
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  @@index([createdAt], map: "guest_identity_created_at_idx")
+}
+
+model Game {
+  id              String         @id @default(cuid())
+  status          GameStatus     @default(WAITING)
+  visibility      GameVisibility @default(PUBLIC)
+  timeCategory    TimeCategory
+  initialTimeMs   Int
+  incrementMs     Int            @default(0)
+  rated           Boolean        @default(false)
+  fen             String         @default("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+  pgn             String?
+  result          String?
+  winnerUserId    String?
+  createdByUserId String?
+  createdByGuestId String?
+  inviteCode      String?        @unique
+  turnColor       PlayerColor    @default(WHITE)
+  turnStartedAt   DateTime?
+  startedAt       DateTime?
+  endedAt         DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  createdBy       User?          @relation("GamesCreated", fields: [createdByUserId], references: [id], onDelete: Cascade)
+  createdByGuest  GuestIdentity? @relation("GamesCreatedByGuest", fields: [createdByGuestId], references: [id], onDelete: Cascade)
+  players         GamePlayer[]
+  moves           Move[]
+  events          GameEvent[]
+
+  @@index([status, visibility, createdAt], map: "game_lobby_idx")
+  @@index([status, visibility, rated, timeCategory, initialTimeMs, incrementMs, createdAt], map: "game_matchmaking_idx")
+  @@index([createdByUserId, status, rated, timeCategory, initialTimeMs, incrementMs, createdAt], map: "game_creator_waiting_idx")
+  @@index([createdByGuestId, status, rated, timeCategory, initialTimeMs, incrementMs, createdAt], map: "game_guest_creator_waiting_idx")
+  @@index([status, endedAt], map: "game_status_ended_idx")
+  @@index([winnerUserId, endedAt], map: "game_winner_ended_idx")
+}
+
+model GamePlayer {
+  id              String      @id @default(cuid())
+  gameId          String
+  userId          String?
+  guestIdentityId String?
+  color           PlayerColor
+  timeRemainingMs Int
+  isConnected     Boolean     @default(false)
+  joinedAt        DateTime    @default(now())
+  game            Game        @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user            User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guestIdentity   GuestIdentity? @relation(fields: [guestIdentityId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, userId])
+  @@unique([gameId, guestIdentityId])
+  @@unique([gameId, color])
+  @@index([userId, joinedAt], map: "game_player_user_joined_idx")
+  @@index([guestIdentityId, joinedAt], map: "game_player_guest_joined_idx")
+  @@index([gameId, joinedAt], map: "game_player_game_joined_idx")
+}
+
+model Move {
+  id            String   @id @default(cuid())
+  gameId        String
+  ply           Int
+  san           String
+  uci           String
+  fenAfter      String
+  movedByUserId String?
+  movedByGuestIdentityId String?
+  spentTimeMs   Int
+  clientThinkTimeMs Int?
+  turnBlurCount Int      @default(0)
+  focusLossDurationMs Int @default(0)
+  createdAt     DateTime @default(now())
+  game          Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  movedBy       User?    @relation(fields: [movedByUserId], references: [id], onDelete: Cascade)
+  movedByGuestIdentity GuestIdentity? @relation(fields: [movedByGuestIdentityId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, ply])
+  @@index([gameId, createdAt], map: "move_game_created_idx")
+  @@index([movedByUserId, createdAt], map: "move_user_created_idx")
+  @@index([movedByGuestIdentityId, createdAt], map: "move_guest_created_idx")
+}
+
+model GameEvent {
+  id        String   @id @default(cuid())
+  gameId    String
+  type      String
+  payload   Json?
+  createdAt DateTime @default(now())
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@index([gameId, createdAt], map: "game_event_game_created_idx")
+  @@index([type, createdAt], map: "game_event_type_created_idx")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "session_user_idx")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  userId                String
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "account_user_idx")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+}
+
+model UserModerationEvent {
+  id             String           @id @default(cuid())
+  userId         String
+  type           String
+  fromStatus     ModerationStatus?
+  toStatus       ModerationStatus?
+  note           String?
+  createdByEmail String
+  createdAt      DateTime         @default(now())
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt], map: "user_moderation_event_user_created_idx")
+  @@index([type, createdAt], map: "user_moderation_event_type_created_idx")
+}
+
+model BackgroundJob {
+  id         String              @id @default(cuid())
+  type       String
+  key        String?             @unique
+  status     BackgroundJobStatus @default(PENDING)
+  payload    Json?
+  runAt      DateTime
+  startedAt  DateTime?
+  finishedAt DateTime?
+  attempts   Int                 @default(0)
+  maxAttempts Int                @default(5)
+  lastError  String?
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  @@index([status, runAt], map: "background_job_status_run_at_idx")
+  @@index([type, status, runAt], map: "background_job_type_status_run_at_idx")
+}

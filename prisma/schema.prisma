@@ -269,3 +269,16 @@ model AppSetting {
 
   @@index([updatedAt], map: "app_setting_updated_at_idx")
 }
+
+model ArenaChatMessage {
+  id        String   @id @default(cuid())
+  actorId   String
+  actorType String
+  name      String
+  username  String?
+  text      String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt], map: "arena_chat_message_created_at_idx")
+  @@index([actorId, createdAt], map: "arena_chat_message_actor_created_at_idx")
+}

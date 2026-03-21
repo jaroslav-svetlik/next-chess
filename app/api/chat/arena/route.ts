@@ -50,9 +50,10 @@ function getArenaChatErrorMessage(code: string) {
 
 export async function GET() {
   const guestPostingEnabled = await getArenaChatGuestPostingEnabled();
+  const messages = await listArenaChatMessages();
 
   return Response.json({
-    messages: listArenaChatMessages(),
+    messages,
     guestPostingEnabled
   });
 }

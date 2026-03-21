@@ -1,4 +1,5 @@
 import { publishArenaChatRealtime } from "@/lib/arena-chat-realtime";
+import { getPgPool } from "@/lib/pg";
 import type { RequestActor } from "@/lib/request-actor";
 
 export type ArenaChatMessage = {
@@ -11,8 +12,17 @@ export type ArenaChatMessage = {
   createdAt: string;
 };
 
+type ArenaChatMessageRow = {
+  id: string;
+  actorId: string;
+  actorType: string;
+  name: string;
+  username: string | null;
+  text: string;
+  createdAt: Date;
+};
+
 type ArenaChatState = {
-  messages: ArenaChatMessage[];
   inFlightActorIds: Set<string>;
   actorGuard: Map<
     string,
@@ -46,7 +56,6 @@ const LETTER_OR_NUMBER_PATTERN = /[\p{L}\p{N}]/u;
 
 function getArenaChatState() {
   globalThis.__grandmateArenaChatState ??= {
-    messages: [],
     inFlightActorIds: new Set(),
     actorGuard: new Map()
   };
@@ -118,8 +127,28 @@ function enforceChatGuards(actor: RequestActor, text: string) {
   });
 }
 
-export function listArenaChatMessages() {
-  return getArenaChatState().messages;
+export async function listArenaChatMessages() {
+  const result = await getPgPool().query<ArenaChatMessageRow>(
+    `
+      SELECT "id", "actorId", "actorType", "name", "username", "text", "createdAt"
+      FROM "ArenaChatMessage"
+      ORDER BY "createdAt" DESC
+      LIMIT $1
+    `,
+    [MAX_MESSAGES]
+  );
+
+  return result.rows
+    .reverse()
+    .map((message) => ({
+      id: message.id,
+      actorId: message.actorId,
+      actorType: message.actorType as ArenaChatMessage["actorType"],
+      name: message.name,
+      username: message.username,
+      text: message.text,
+      createdAt: message.createdAt.toISOString()
+    }));
 }
 
 export async function postArenaChatMessage(actor: RequestActor, text: string) {
@@ -143,24 +172,32 @@ export async function postArenaChatMessage(actor: RequestActor, text: string) {
   state.inFlightActorIds.add(actor.id);
 
   try {
-    const message: ArenaChatMessage = {
-      id: crypto.randomUUID(),
-      actorId: actor.id,
-      actorType: actor.actorType,
-      name: actor.name,
-      username: actor.username,
-      text: normalizedText,
-      createdAt: new Date().toISOString()
-    };
+    const result = await getPgPool().query<ArenaChatMessageRow>(
+      `
+        INSERT INTO "ArenaChatMessage" ("id", "actorId", "actorType", "name", "username", "text")
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING "id", "actorId", "actorType", "name", "username", "text", "createdAt"
+      `,
+      [crypto.randomUUID(), actor.id, actor.actorType, actor.name, actor.username, normalizedText]
+    );
+    const [message] = result.rows;
 
-    state.messages = [...state.messages, message].slice(-MAX_MESSAGES);
+    const persistedMessage: ArenaChatMessage = {
+      id: message.id,
+      actorId: message.actorId,
+      actorType: message.actorType as ArenaChatMessage["actorType"],
+      name: message.name,
+      username: message.username,
+      text: message.text,
+      createdAt: message.createdAt.toISOString()
+    };
 
     await publishArenaChatRealtime({
       type: "arena_chat",
-      message
+      message: persistedMessage
     });
 
-    return message;
+    return persistedMessage;
   } finally {
     state.inFlightActorIds.delete(actor.id);
   }

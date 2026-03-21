@@ -1,186 +1,184 @@
-# Multiplayer Chess Platform Plan
+# NextChess Platform Plan
 
-## 1. Vizija proizvoda
+## 1. Document Purpose
 
-Cilj je da napravimo ozbiljnu multiplayer chess aplikaciju u Next.js-u gde registrovani korisnici mogu:
+This document is no longer a pre-build MVP plan. It is the working platform plan for a product that is already live in public alpha.
 
-- da naprave nalog i imaju svoj profil
-- da kreiraju novu partiju i cekaju protivnika
-- da se pridruze otvorenoj partiji iz lobbya
-- da igraju realtime 1v1 sah sa validacijom poteza na serveru
-- da biraju format: bullet, blitz, rapid ili custom
-- da vide istek vremena, rezultat i istoriju partija
+Its purpose is to:
 
-Prva verzija treba da izgleda premium, brzo i “takmicarski”, a ne kao demo projekat.
+- describe the real current state of the application
+- separate what is already shipped from what is still planned
+- guide the next development phases without mixing wishlist items with existing features
 
-## 2. Produktni scope
+The reference point for current state is `CHANGELOG.md`, together with the live codebase.
 
-### MVP
+## 2. Current Platform Status
 
-- email/password registracija i login
-- osnovni user profil: username, avatar, rating placeholder
-- lobby sa listom otvorenih partija
-- create game flow
-- join game flow
-- realtime sahovska tabla za 2 igraca
-- server-side validacija poteza
-- server-authoritative sat
-- rezultat partije: checkmate, resign, timeout, draw
-- istorija partija na profilu
-- preset time controls:
-  - bullet: `1+0`, `2+1`
-  - blitz: `3+0`, `3+2`, `5+0`
-  - rapid: `10+0`, `10+5`, `15+10`
-- custom game setup:
-  - initial time u sekundama/minutima
-  - increment u sekundama
-  - public ili private invite
-  - rated ostaviti kao disabled/coming soon u MVP-u
+Status as of `2026-03-21`:
 
-### V1.1
+- public alpha is live on `nextchess.org`
+- current runtime version is `0.6.5`
+- the application is no longer a concept plan, but a functional multiplayer chess platform with admin and trust/safety foundations
 
-- chat tokom partije
-- friend invite link
-- rematch
-- spectate mode
-- reconnect recovery
-- premove
-- sound effects i move animations
+## 3. What Is Already Implemented
 
-### V2
+### 3.1 Core Gameplay
 
-- rating / ELO
-- matchmaking queue po formatu
-- anti-cheat signals i suspicious behavior flags
-- tournaments / arenas
-- analysis board i PGN export
-- puzzles / bot
+- registration and login through `Better Auth`
+- guest play and registered-account play in production
+- separate guest and account matchmaking pools
+- quick pair with preset time controls
+- full lobby with create and join flow
+- public and private game creation
+- server-authoritative game lifecycle
+- server-side move validation through `chess.js`
+- backend-authoritative clock and timeout handling
+- resign flow
+- waiting, active, finished, and cancelled game states
+- reconnect and presence signaling in the game room
 
-## 3. Preporuceni stack
+### 3.2 In-Game UX
 
-### Frontend / app shell
+- drag-and-drop board
+- on-board promotion flow
+- premove queue
+- arrows and marked squares
+- last-move highlight
+- check indicator
+- captured-piece display
+- move list inside the game room
+- gameplay sound effects
 
-- `Next.js` sa `App Router` pristupom
-- `TypeScript`
-- `Tailwind CSS`
-- custom component system umesto generickog UI kita kao glavnog vizuelnog jezika
+### 3.3 Home, Lobby, and Discovery Surface
 
-Zasto:
+- home arena shell with quick pair and live lobby preview
+- live open-games list with realtime updates
+- quick entry into games from the home screen
+- dedicated `/lobby` screen for deeper create/join control
+- correspondence tab placeholder exists in the UI, but the feature is not implemented yet
 
-- Next.js App Router je i dalje recommended pravac u zvanicnoj dokumentaciji i daje dobar osnov za server rendering, layouts, server actions i route handlers.
+### 3.4 Public Competitive Surface
 
-### Auth
+- username-first public identity
+- public leaderboard
+- public player pages
+- finished-game history with filters
+- replay/archive pages for finished games
+- PGN and move-by-move replay review
+- rating snapshot for bullet, blitz, and rapid
 
-- `Better Auth`
-- email/password kao osnovni login
-- social login opciono kasnije
+### 3.5 Chat, Moderation, and Admin
 
-Zasto:
+- arena chat on the home screen
+- guest arena chat enabled during alpha
+- admin toggle for enabling or disabling guest chat posting
+- account moderation statuses (`CLEAN`, `OBSERVE`, `WATCH`, `REVIEW`, `RESTRICTED`)
+- rated/casual access restrictions based on moderation state
+- admin overview, search, competitive, moderation, anti-cheat, and activity workspaces
+- moderation history and user detail pages
+- CSV export for moderation data
 
-- Better Auth ima eksplicitnu Next.js integraciju preko route handlera i dobro lezi uz App Router.
+### 3.6 Anti-Cheat and Review Pipeline
 
-### Database
+- per-move client telemetry signals
+- focus-loss and blur telemetry
+- heuristic anti-cheat scoring
+- per-game review summary payloads
+- background jobs for engine review and deadline handling
+- Stockfish-backed post-game analysis pipeline
 
-- `PostgreSQL`
-- `Prisma ORM`
+### 3.7 Realtime and Infrastructure
 
-Zasto:
+- custom WebSocket transport through `/ws`
+- shared realtime broker through PostgreSQL `LISTEN/NOTIFY`
+- realtime updates for the lobby and game room
+- background worker model for asynchronous jobs
+- observability layer for lifecycle and failure logging
 
-- trebaju nam jasni relacijski modeli za users, games, players, moves, events i istoriju
-- Prisma ima aktuelnu Next.js + Postgres dokumentaciju i ubrzava razvoj admin/debug sloja
+## 4. What Is Still Missing
 
-### Realtime
+These are important product boundaries that the plan needs to state clearly:
 
-Preporuka za ozbiljan start:
+- correspondence chess is not implemented yet
+- dedicated settings/profile management does not exist yet
+- rematch flow is not shipped yet
+- draw offer / draw response flow is not shipped yet
+- in-game chat is not shipped yet
+- a full spectator product is not complete as a dedicated feature set
+- tournament / arena competition systems are not shipped yet
+- friends, parties, clans, and broader social graph features do not exist
+- puzzles and bot play do not exist
+- deeper analysis UX and rating-history visualizations are not complete
 
-- `Ably` za realtime evente i presence
+## 5. Product Positioning Today
 
-Alternativa:
+NextChess is not "an MVP that still needs a chessboard."
 
-- `Liveblocks` ako hocemo jaci collaboration/presence toolkit iz kutije
+A more accurate description is:
 
-Zasto Ably kao primarna preporuka:
+- a public alpha multiplayer chess product
+- with working realtime gameplay
+- with separate guest and account onboarding paths
+- with a public competitive surface
+- with admin and anti-cheat foundations
+- with infrastructure that already runs in production
 
-- chess je event-driven proizvod: lobby updates, join, move, resign, draw offer, clock sync
-- Ably ima presence i ordering primitives koji odgovaraju multiplayer igri
-- izbegavamo da prvu verziju pravimo oko custom websocket servera zalepljenog uz Next deploy
+Because of that, the next phases should not be planned as "foundation work," but as:
 
-Napomena:
+- hardening the existing system
+- deepening gameplay and replay quality
+- expanding retention and social value
+- strengthening production operations
 
-- i uz Ably, game state i validacija ostaju na serveru i u bazi
-- client nikad nije source of truth za potez ili sat
+## 6. Architectural Principles That Stay Fixed
 
-### Chess engine / rules
+### 6.1 Server-Authoritative Gameplay
 
-- `chess.js`
+This remains non-negotiable:
 
-Zasto:
+- the client sends intent
+- the server validates move legality and actor permissions
+- the server computes canonical game state and time
+- only then is state broadcast to clients
 
-- stabilan i fokusiran na pravila saha: move validation, FEN, PGN, draw/checkmate/stalemate
+The client is never the source of truth for:
 
-### Optional supporting infra
+- move legality
+- turn ownership
+- the clock
+- game result
 
-- `Upstash Redis` ili klasicni Redis za ephemeral state, reconnect windows i queue/signaling cache
-- `Sentry` za error monitoring
-- `Vercel` za app deploy + managed Postgres provider po izboru
+### 6.2 Realtime Direction
 
-## 4. Arhitektura sistema
+The active stack is no longer an Ably-oriented plan.
 
-## 4.1 Princip
+The current direction is:
 
-Sistem mora da bude server-authoritative.
+- `ws` WebSocket server for browser connections
+- PostgreSQL `LISTEN/NOTIFY` as the shared cross-process signaling layer
+- server snapshot plus patch update flow for lobby and game state
 
-To znaci:
+Future realtime work should improve this model, not document the product as if the base transport is still undecided.
 
-- klijent salje nameru: “zelim da pomerim figuru sa e2 na e4”
-- server proverava:
-  - da li je igrac clan te partije
-  - da li je na potezu
-  - da li je potez legalan
-  - da li igrac jos ima vreme
-- server upisuje potez, izracunava novo stanje table i vremena
-- tek onda broadcast-uje potvrden event svim klijentima
+### 6.3 Trust and Safety by Default
 
-Ako pustimo da klijent sam “vodi partiju”, dobicemo sync bugove, cheating rupe i clock drift.
+New features should not be added without answering these questions:
 
-## 4.2 Glavni moduli
+- how they will be moderated
+- how they will be audited
+- how abuse will be limited
+- how they change guest onboarding and spam surface area
 
-### Auth module
+This is especially important for:
 
-- signup
-- login
-- session handling
-- protected routes
+- chat features
+- social features
+- spectator and correspondence flows
+- rematch and invite mechanics
 
-### Lobby module
+## 7. Current Route and Module Map
 
-- prikaz otvorenih partija
-- create/cancel game
-- public/private room status
-- online/presence info
-
-### Game module
-
-- authoritative game lifecycle
-- move submission
-- turn enforcement
-- draw/resign/timeout
-- reconnect state restore
-
-### Time-control module
-
-- preset i custom kontrole
-- authoritative countdown
-- increment after valid move
-- timeout resolution
-
-### History/Profile module
-
-- lista zavrsenih partija
-- osnovna statistika
-- PGN/FEN storage
-
-## 5. Predlog route strukture
+### 7.1 Public Routes
 
 ```text
 /
@@ -188,320 +186,186 @@ Ako pustimo da klijent sam “vodi partiju”, dobicemo sync bugove, cheating ru
 /auth/register
 /lobby
 /game/[gameId]
-/profile/[username]
-/settings/profile
+/archive/[gameId]
+/leaderboard
+/players/[userId]
 ```
 
-API / server endpoints:
+### 7.2 Admin Routes
+
+```text
+/admin
+/admin/search
+/admin/competitive
+/admin/moderation
+/admin/anti-cheat
+/admin/activity
+/admin/users/[userId]
+/admin/games/[gameId]
+/admin/head-to-head/[leftUserId]/[rightUserId]
+```
+
+### 7.3 Active API Surface
 
 ```text
 /api/auth/[...all]
+/api/auth/username
+/api/lobby
 /api/games
 /api/games/[gameId]
 /api/games/[gameId]/join
 /api/games/[gameId]/move
 /api/games/[gameId]/resign
-/api/games/[gameId]/draw-offer
-/api/games/[gameId]/draw-response
-/api/lobby
-/api/realtime/auth
+/api/games/[gameId]/presence
+/api/matchmaking/quick-pair
+/api/chat/arena
+/api/events/lobby
+/api/events/games/[gameId]
+/api/admin/settings/guest-chat
+/api/admin/users/[userId]/moderation
+/api/admin/export/moderation
+/api/health
 ```
 
-Napomena:
+## 8. Actual Technical Stack
 
-- move/resign/draw akcije mogu ici preko server actions ili route handlera
-- realtime kanal sluzi za push, ali autorizacija i finalna validacija ostaju na backend-u
-
-## 6. Model podataka
-
-## 6.1 User
-
-- `id`
-- `email`
-- `username`
-- `displayName`
-- `avatarUrl`
-- `ratingRapid`
-- `ratingBlitz`
-- `ratingBullet`
-- `createdAt`
-- `updatedAt`
-
-## 6.2 Game
-
-- `id`
-- `status`
-  - `waiting`
-  - `active`
-  - `finished`
-  - `cancelled`
-- `visibility`
-  - `public`
-  - `private`
-- `timeCategory`
-  - `bullet`
-  - `blitz`
-  - `rapid`
-  - `custom`
-- `initialTimeMs`
-- `incrementMs`
-- `rated`
-- `fen`
-- `pgn`
-- `result`
-- `winnerUserId`
-- `createdByUserId`
-- `startedAt`
-- `endedAt`
-- `createdAt`
-- `updatedAt`
-
-## 6.3 GamePlayer
-
-- `id`
-- `gameId`
-- `userId`
-- `color`
-  - `white`
-  - `black`
-- `timeRemainingMs`
-- `isConnected`
-- `joinedAt`
-
-## 6.4 Move
-
-- `id`
-- `gameId`
-- `ply`
-- `san`
-- `uci`
-- `fenAfter`
-- `movedByUserId`
-- `spentTimeMs`
-- `createdAt`
-
-## 6.5 GameEvent
-
-- `id`
-- `gameId`
-- `type`
-  - `game_created`
-  - `player_joined`
-  - `game_started`
-  - `move_made`
-  - `draw_offered`
-  - `draw_accepted`
-  - `resigned`
-  - `timeout`
-  - `player_disconnected`
-  - `player_reconnected`
-- `payload`
-- `createdAt`
-
-## 7. Realtime tokovi
-
-## 7.1 Create game
-
-1. User kreira partiju iz lobbya.
-2. Server pravi `Game` status `waiting`.
-3. Lobby broadcast-uje novu otvorenu partiju.
-4. Creator ide u waiting room ekran.
-
-## 7.2 Join game
-
-1. Drugi user klikne join.
-2. Server radi transaction:
-   - proverava da partija jos ceka
-   - upisuje drugog igraca
-   - dodeljuje boju
-   - menja status u `active`
-3. Server salje `game_started` event obema stranama.
-4. Oba klijenta prelaze u `/game/[gameId]`.
-
-## 7.3 Move flow
-
-1. Klijent lokalno prikaze optimistic drag.
-2. Salje move intent serveru.
-3. Server validira preko `chess.js`.
-4. Server racuna clock delta.
-5. Server cuva `Move` i update-uje `Game` + `GamePlayer`.
-6. Server push-uje canonical state svim subscriberima.
-7. Klijenti uskladjuju prikaz sa canonical state-om.
-
-## 7.4 Reconnect
-
-1. Igrac pukne sa mreze.
-2. Presence oznaci disconnect.
-3. Partija ostaje aktivna, sat nastavlja ako je njegov potez.
-4. Reconnect fetch-uje poslednji canonical snapshot.
-
-## 8. Pravila za sat
-
-Clock mora da bude backend-authoritative.
-
-Predlog:
-
-- u bazi cuvamo preostalo vreme po igracu
-- cuvamo `lastMoveAt` ili `turnStartedAt`
-- pri svakom potezu server racuna koliko je vremena stvarno potroseno
-- increment se dodaje tek posle validnog poteza
-- klijent renderuje lokalni countdown radi UX-a, ali se povremeno resync-uje sa serverom
-
-Ovo je bitno jer je clock najosetljiviji deo multiplayer saha.
-
-## 9. UI/UX pravac
-
-Ne praviti “developer dashboard” izgled.
-
-Vizuelni pravac za premium sah proizvod:
-
-- tema: `ivory`, `graphite`, `forest`, `brass`
-- atmosfera: luksuzni klub / turnirska sala / moderni sportski UI
-- figura i tabla:
-  - elegantna 2D ili blago textured 2.5D tabla
-  - jaka kontrastna polja
-  - citljive figure bez kica
-- tipografija:
-  - display serif za hero i identitet
-  - cist sans za UI
-- motion:
-  - suptilan fade/slide pri ulasku u lobby
-  - ozbiljne, brze animacije poteza
-  - clock urgency states sa decent glow efektom
-
-### Kljucni ekrani
-
-- Landing
-  - jak hero sa “Play serious chess in real time”
-  - CTA za register / enter lobby
-- Lobby
-  - cards za otvorene partije
-  - create game panel koji izgleda kao control desk, ne kao obican form
-- Waiting Room
-  - status “waiting for opponent”
-  - share invite link
-  - cancel game
-- Game Screen
-  - tabla kao centralni fokus
-  - player cards gore/dole ili levo/desno
-  - clock, move list, action buttons
-- Profile
-  - recent games
-  - format breakdown
-  - basic stats
-
-## 10. Bezbednost i integritet
-
-- svaki move mora proci backend validaciju
-- join endpoint mora biti transactional da spreci dupli join
-- private games koriste secure invite token
-- rate limiting na auth i create/join akcijama
-- audit trail kroz `GameEvent`
-- sanitizacija user input-a za username/chat
-
-## 11. Test strategija
-
-### Unit
-
-- chess move validation wrapper
-- clock calculation
-- game state transitions
-- result resolution
-
-### Integration
-
-- create -> join -> start flow
-- valid move -> state persisted
-- invalid move rejected
-- timeout handling
-- resign / draw flow
-
-### E2E
-
-- register dva korisnika
-- user A napravi partiju
-- user B udje u lobby i pridruzi se
-- odigrati nekoliko poteza
-- potvrditi istoriju partije
-
-## 12. Faze izrade
-
-### Faza 1: Foundation
-
-- bootstrap Next.js app
-- setup Tailwind + design tokens
-- setup Better Auth
-- setup Prisma + Postgres
-- user/profile schema
-
-### Faza 2: Lobby
-
-- create game modal/panel
-- open games list
-- waiting room
-- public/private invite logic
-
-### Faza 3: Core gameplay
-
-- chess board UI
-- authoritative move API
-- realtime subscriptions
-- clocks
-- finish states
-
-### Faza 4: History + polish
-
-- profile page
-- game archive
-- move list
-- reconnect UX
-- sound/motion/premium visual pass
-
-### Faza 5: Competitive systems
-
-- ratings
-- matchmaking queue
-- spectating
-- moderation / abuse controls
-
-## 13. Konkretna preporuka za prvi build
-
-Ako hocemo brz ali ozbiljan start, ja bih izabrao:
-
-- `Next.js App Router`
+- `Next.js` App Router
 - `TypeScript`
-- `Tailwind CSS` + custom design system
+- `Tailwind CSS`
 - `Better Auth`
-- `PostgreSQL`
 - `Prisma`
-- `Ably`
+- `PostgreSQL`
+- `ws`
 - `chess.js`
+- `Stockfish`
 
-To daje:
+Note:
 
-- moderan full-stack app shell
-- jednostavniji auth setup
-- relacijsku bazu za istoriju i profile
-- managed realtime bez improvizovanog websocket hostinga
-- proverenu sah logiku
+- the previous version of this document proposed `Ably` as the primary realtime direction
+- that no longer matches the real codebase
+- documentation should follow the current implementation, not an outdated architecture evaluation
 
-## 14. Rizici koje treba resiti rano
+## 9. Next Development Phases
 
-- clock drift i authoritative timing
-- reconnect logika
-- race condition pri join-u
-- optimistic UI koji se razilazi od server stanja
-- deploy model za realtime auth i server validation
+### Phase A: Public Beta Hardening
 
-## 15. Sledeci konkretan korak
+Goal:
 
-Najracionalnije je da odmah uradimo:
+- make the existing alpha product more stable, clearer, and more ready for broader traffic
 
-1. inicijalizaciju projekta
-2. bazni dizajn sistem i layout
-3. auth + baza
-4. lobby i create/join flow
+Scope:
 
-Tek nakon toga sah tabla i realtime gameplay.
+- additional copy cleanup, onboarding clarity, and empty-state UX polish
+- stronger mobile polish across home, lobby, game, and archive surfaces
+- clearer failure states for reconnect, join conflict, and timeout scenarios
+- replay and game-result presentation polish
+- README, docs, and release discipline aligned with the real state of the app
 
-Tako dobijamo proizvod koji izgleda ozbiljno od prvog dana i ima cvrst backend temelj.
+### Phase B: Gameplay Completeness
+
+Goal:
+
+- close the most visible gaps in the live game experience
+
+Planned features:
+
+- draw offer / accept / decline flow
+- rematch flow after finished games
+- better spectator behavior and spectator-specific UI states
+- stronger private invite flow and sharing UX
+- additional waiting-room and post-game action polish
+
+### Phase C: Replay and Analysis Depth
+
+Goal:
+
+- make finished games more valuable after the live session ends
+
+Planned features:
+
+- richer replay controls
+- engine-review presentation in both public and admin contexts
+- move-quality breakdown
+- openings, accuracy, and critical-moment surface
+- export and analysis affordances that are useful to serious players
+
+### Phase D: Player Progression
+
+Goal:
+
+- make profiles and the competitive layer more valuable over time
+
+Planned features:
+
+- rating-history charts
+- deeper statistics by format and time range
+- streaks, volume, activity, and result breakdowns
+- profile polish and eventual settings/profile management
+- stronger public identity surface around username, avatar, and profile presentation
+
+### Phase E: Trust, Safety, and Moderation Automation
+
+Goal:
+
+- reduce manual admin burden as the user base grows
+
+Planned features:
+
+- stronger anti-cheat heuristics
+- better review queue prioritization
+- broader audit trail for critical actions
+- moderation automation and recommendation-quality improvements
+- expanded chat-safety controls if guest arena chat remains open
+
+### Phase F: Correspondence and Asynchronous Play
+
+Goal:
+
+- open a new retention mode without weakening the live gameplay core
+
+Planned features:
+
+- correspondence game lifecycle
+- separate clock and turn-window rules
+- inbox and waiting states for slower games
+- profile and history integration for asynchronous play
+
+Note:
+
+- correspondence is not a small add-on
+- it should be built as its own lifecycle, not as a minor extension of the live queue
+
+## 10. Medium-Term Backlog
+
+These items make sense after the phases above, but are not on the immediate critical path:
+
+- in-game chat
+- friends / follow / lightweight social graph
+- notifications
+- tournament / arena systems
+- clubs or seasonal competition structures
+- bot play
+- puzzles and training mode
+- stronger deploy and queue infrastructure beyond the current alpha scope
+
+## 11. Priority Order
+
+If priorities conflict, the order should be:
+
+1. live gameplay stability and data integrity
+2. public beta polish and onboarding clarity
+3. replay / analysis / player-value improvements
+4. moderation and anti-cheat strengthening
+5. new modes and social expansion
+
+## 12. Practical Definition of "Real State"
+
+The next time this document is updated, changes should be driven by:
+
+- `CHANGELOG.md`
+- real routes and APIs
+- the Prisma model and background job layer
+- features that users can actually click and use
+
+This document should not drift back into pre-implementation product ideation.
+

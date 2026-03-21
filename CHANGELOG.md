@@ -8,6 +8,25 @@ Version source of truth:
 
 The project is still in `0.x`, so versions represent active alpha milestones and can change quickly.
 
+## [0.6.6] - 2026-03-21
+
+Documentation release focused on making release docs consistent and English-only.
+
+### Changed
+
+- rewrote [docs/chess-platform-plan.md](/Users/jaroslavsvetlik/Documents/NextJS/chess/docs/chess-platform-plan.md) so it reflects the real current NextChess product state, keeps the document entirely in English, and separates shipped scope from future phases
+- rewrote [docs/release-process.md](/Users/jaroslavsvetlik/Documents/NextJS/chess/docs/release-process.md) into English-only release guidance aligned with the current NextChess naming and release model
+- synced release metadata by bumping [package.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package.json) to `0.6.6`, updating the root package version in [package-lock.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package-lock.json), refreshing the reported version in [README.md](/Users/jaroslavsvetlik/Documents/NextJS/chess/README.md), and keeping the changelog in latest-first order
+
+## [0.6.5] - 2026-03-21
+
+Patch release focused on removing Serbian UI copy from the app.
+
+### Changed
+
+- replaced remaining Serbian user-facing strings in [components/lobby/lobby-shell.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/lobby/lobby-shell.tsx), [app/auth/login/page.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/auth/login/page.tsx), [app/auth/register/page.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/auth/register/page.tsx), and [app/game/[gameId]/page.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/game/[gameId]/page.tsx) with English-only copy
+- synced release metadata by bumping [package.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package.json) to `0.6.5`, updating the root package identity/version in [package-lock.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package-lock.json), and recording this patch in the changelog
+
 ## [0.6.4] - 2026-03-21
 
 Production guest-chat release focused on anonymous arena chat and admin guest-posting control.
@@ -19,15 +38,6 @@ Production guest-chat release focused on anonymous arena chat and admin guest-po
 - updated [components/home/arena-chat-panel.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/home/arena-chat-panel.tsx) and [components/home/home-arena-shell.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/home/home-arena-shell.tsx) so guests can post in arena chat during alpha, see a clear disabled state when anonymous posting is turned off, and receive live chat-settings updates
 - added [app/api/admin/settings/guest-chat/route.ts](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/api/admin/settings/guest-chat/route.ts) and [components/admin/guest-chat-controls.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/admin/guest-chat-controls.tsx), then wired them into [app/admin/page.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/admin/page.tsx), so admins can explicitly enable or disable guest arena chat without redeploying
 - bumped the runtime version in [package.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package.json) and refreshed [README.md](/Users/jaroslavsvetlik/Documents/NextJS/chess/README.md) to reflect production guest chat support and the admin override
-
-## [0.6.5] - 2026-03-21
-
-Patch release focused on removing Serbian UI copy from the app.
-
-### Changed
-
-- replaced remaining Serbian user-facing strings in [components/lobby/lobby-shell.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/lobby/lobby-shell.tsx), [app/auth/login/page.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/auth/login/page.tsx), [app/auth/register/page.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/auth/register/page.tsx), and [app/game/[gameId]/page.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/game/[gameId]/page.tsx) with English-only copy
-- synced release metadata by bumping [package.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package.json) to `0.6.5`, updating the root package identity/version in [package-lock.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package-lock.json), and recording this patch in the changelog
 
 ## [0.6.3] - 2026-03-21
 

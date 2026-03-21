@@ -8,6 +8,17 @@ Version source of truth:
 
 The project is still in `0.x`, so versions represent active alpha milestones and can change quickly.
 
+## [0.6.3] - 2026-03-21
+
+Production guest-play release focused on real anonymous matchmaking outside development.
+
+### Changed
+
+- changed guest identity transport in [lib/dev-auth.ts](/Users/jaroslavsvetlik/Documents/NextJS/chess/lib/dev-auth.ts) from dev-only bypass headers to stable browser guest headers so guest requests work in production too
+- updated [lib/request-actor.ts](/Users/jaroslavsvetlik/Documents/NextJS/chess/lib/request-actor.ts) so anonymous guests are recognized in production through `GuestIdentity` instead of only through the old development bypass flow
+- updated guest-facing copy in [components/lobby/lobby-shell.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/lobby/lobby-shell.tsx) to describe real guest mode instead of development-only behavior
+- bumped the runtime version in [package.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package.json) and refreshed [README.md](/Users/jaroslavsvetlik/Documents/NextJS/chess/README.md) to reflect live guest matchmaking support
+
 ## [0.6.2] - 2026-03-21
 
 Documentation release focused on clearer public demo visibility.

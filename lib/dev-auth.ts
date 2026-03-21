@@ -6,7 +6,8 @@ export type DemoIdentity = {
 
 const ANONYMOUS_NAME = "Anonymous";
 
-export const DEMO_IDENTITY_STORAGE_KEY = "grandmate-demo-identity";
+export const DEMO_IDENTITY_STORAGE_KEY = "nextchess-guest-identity";
+const LEGACY_DEMO_IDENTITY_STORAGE_KEY = "grandmate-demo-identity";
 
 function createDemoIdentity(): DemoIdentity {
   const id =
@@ -32,11 +33,9 @@ export function buildDemoHeaders(identity: DemoIdentity) {
     "Content-Type": "application/json"
   };
 
-  if (process.env.NEXT_PUBLIC_DEV_AUTH_BYPASS === "true") {
-    headers["x-demo-id"] = identity.id;
-    headers["x-demo-name"] = identity.name;
-    headers["x-demo-email"] = identity.email;
-  }
+  headers["x-guest-id"] = identity.id;
+  headers["x-guest-name"] = identity.name;
+  headers["x-guest-email"] = identity.email;
 
   return headers;
 }
@@ -44,11 +43,9 @@ export function buildDemoHeaders(identity: DemoIdentity) {
 export function buildDemoQuery(identity: DemoIdentity) {
   const searchParams = new URLSearchParams();
 
-  if (process.env.NEXT_PUBLIC_DEV_AUTH_BYPASS === "true") {
-    searchParams.set("demoId", identity.id);
-    searchParams.set("demoName", identity.name);
-    searchParams.set("demoEmail", identity.email);
-  }
+  searchParams.set("guestId", identity.id);
+  searchParams.set("guestName", identity.name);
+  searchParams.set("guestEmail", identity.email);
 
   return searchParams.toString();
 }
@@ -58,7 +55,9 @@ export function loadStoredDemoIdentity() {
     return DEFAULT_DEMO_IDENTITY;
   }
 
-  const storedValue = window.sessionStorage.getItem(DEMO_IDENTITY_STORAGE_KEY);
+  const storedValue =
+    window.sessionStorage.getItem(DEMO_IDENTITY_STORAGE_KEY) ??
+    window.sessionStorage.getItem(LEGACY_DEMO_IDENTITY_STORAGE_KEY);
   if (!storedValue) {
     const nextIdentity = createDemoIdentity();
     window.sessionStorage.setItem(DEMO_IDENTITY_STORAGE_KEY, JSON.stringify(nextIdentity));
@@ -68,10 +67,13 @@ export function loadStoredDemoIdentity() {
   try {
     const parsed = JSON.parse(storedValue) as DemoIdentity;
     if (parsed.id && parsed.name && parsed.email) {
+      window.sessionStorage.setItem(DEMO_IDENTITY_STORAGE_KEY, JSON.stringify(parsed));
+      window.sessionStorage.removeItem(LEGACY_DEMO_IDENTITY_STORAGE_KEY);
       return parsed;
     }
   } catch {
     window.sessionStorage.removeItem(DEMO_IDENTITY_STORAGE_KEY);
+    window.sessionStorage.removeItem(LEGACY_DEMO_IDENTITY_STORAGE_KEY);
   }
 
   const nextIdentity = createDemoIdentity();

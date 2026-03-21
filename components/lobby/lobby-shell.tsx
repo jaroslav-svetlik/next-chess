@@ -289,12 +289,12 @@ export function LobbyShell() {
                 ? "Real account session je aktivan, ali rated play je trenutno ogranicen na casual tokove."
                 : "Real account session je aktivan. Ovo je baza za ranked, profile i statistiku."}
             </p>
-          ) : process.env.NEXT_PUBLIC_DEV_AUTH_BYPASS === "true" ? (
+          ) : (
             <p className="muted">
-              Anonymous guest mode je ukljucen. Ovaj tab ima svoj skriveni guest ID, tako da mozes
-              odmah da pravis i join-ujes partije bez registracije.
+              Guest mode je aktivan. Ovaj browser tab koristi sopstveni anonimni guest identitet,
+              tako da mozes odmah da pravis i join-ujes guest partije bez registracije.
             </p>
-          ) : null}
+          )}
           <div className="field">
             <label htmlFor="time">Control</label>
             <select id="time" onChange={(event) => setControl(event.target.value)} value={control}>

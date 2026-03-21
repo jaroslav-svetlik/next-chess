@@ -15,10 +15,6 @@ export type RequestActor = {
   actorType: "user" | "guest";
 };
 
-function isDevBypassEnabled() {
-  return process.env.NODE_ENV !== "production" && process.env.DEV_AUTH_BYPASS === "true";
-}
-
 function sanitizeEmail(value: string | null) {
   if (!value) {
     return null;
@@ -49,7 +45,7 @@ function getQueryParam(request: Request, key: string) {
   return new URL(request.url).searchParams.get(key);
 }
 
-function sanitizeDemoId(value: string | null) {
+function sanitizeGuestId(value: string | null) {
   if (!value) {
     return null;
   }
@@ -72,26 +68,26 @@ function buildUsername(name: string, suffix?: string | null) {
 }
 
 async function getDemoActor(request: Request): Promise<RequestActor | null> {
-  if (!isDevBypassEnabled()) {
+  const demoId =
+    sanitizeGuestId(request.headers.get("x-guest-id")) ??
+    sanitizeGuestId(getQueryParam(request, "guestId")) ??
+    sanitizeGuestId(request.headers.get("x-demo-id")) ??
+    sanitizeGuestId(getQueryParam(request, "demoId"));
+
+  if (!demoId) {
     return null;
   }
 
-  const demoId =
-    sanitizeDemoId(request.headers.get("x-demo-id")) ??
-    sanitizeDemoId(getQueryParam(request, "demoId"));
-  const email =
-    (demoId ? `guest-${demoId}@grandmate.local` : null) ??
-    sanitizeEmail(request.headers.get("x-demo-email")) ??
-    sanitizeEmail(getQueryParam(request, "demoEmail")) ??
-    sanitizeEmail(process.env.DEV_DEMO_USER_EMAIL ?? null) ??
-    DEFAULT_DEMO_EMAIL;
   const name =
+    sanitizeName(request.headers.get("x-guest-name")) ??
+    sanitizeName(getQueryParam(request, "guestName")) ??
     sanitizeName(request.headers.get("x-demo-name")) ??
     sanitizeName(getQueryParam(request, "demoName")) ??
     sanitizeName(process.env.DEV_DEMO_USER_NAME ?? null) ??
     DEFAULT_DEMO_NAME;
+  const email = sanitizeEmail(`guest-${demoId}@grandmate.local`) ?? DEFAULT_DEMO_EMAIL;
 
-  const key = `guest:${demoId ?? email}`;
+  const key = `guest:${demoId}`;
   const guest = await db.guestIdentity.upsert({
     where: {
       key

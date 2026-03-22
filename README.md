@@ -1,3 +1,5 @@
+![NextChess Logo](public/branding/nextchess-logo.png)
+
 # NextChess
 
 NextChess is a real-time multiplayer chess platform built with Next.js for players who want fast pairing, clean UX, public profiles, rated play, and serious operational tooling behind the game.

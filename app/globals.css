@@ -1411,48 +1411,54 @@ select {
   width: 3.5rem;
   height: 3.5rem;
   border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(12, 24, 39, 0.92);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 10px 24px rgba(0, 0, 0, 0.16);
+  padding: 0.4rem;
+  text-align: center;
 }
 
-.site-tech-logo svg {
-  width: 2rem;
-  height: 2rem;
+.site-tech-wordmark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 100%;
+  font-size: 0.98rem;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  white-space: nowrap;
 }
 
 .site-tech-logo.next {
-  color: #f5fdff;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+  color: #fafafa;
 }
 
 .site-tech-logo.react {
   color: #61dafb;
-  background: linear-gradient(135deg, rgba(97, 218, 251, 0.15), rgba(79, 172, 254, 0.08));
 }
 
 .site-tech-logo.typescript {
   color: #3178c6;
-  background: linear-gradient(135deg, rgba(49, 120, 198, 0.18), rgba(49, 120, 198, 0.08));
 }
 
 .site-tech-logo.tailwind {
   color: #38bdf8;
-  background: linear-gradient(135deg, rgba(56, 189, 248, 0.18), rgba(34, 211, 238, 0.08));
 }
 
 .site-tech-logo.prisma {
-  color: #cfe5ff;
-  background: linear-gradient(135deg, rgba(165, 195, 255, 0.16), rgba(89, 124, 255, 0.08));
+  color: #5a67d8;
 }
 
 .site-tech-logo.postgres {
-  color: #7bb8ff;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.16), rgba(96, 165, 250, 0.08));
+  color: #6699cc;
 }
 
 .site-tech-logo.auth {
-  color: #90f0d5;
-  background: linear-gradient(135deg, rgba(51, 160, 140, 0.18), rgba(144, 240, 213, 0.08));
+  color: #ffffff;
 }
 
 .site-tech-meta {

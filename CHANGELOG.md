@@ -8,6 +8,22 @@ Version source of truth:
 
 The project is still in `0.x`, so versions represent active alpha milestones and can change quickly.
 
+## [0.6.17] - 2026-03-22
+
+Rating-system release focused on moving registered rated play from a flat Elo ladder to a lichess-like provisional flow with stronger early swings and calmer stable updates.
+
+### Added
+
+- added [scripts/sql/add_glicko_rating_state.sql](/Users/jaroslavsvetlik/Documents/NextJS/chess/scripts/sql/add_glicko_rating_state.sql) to introduce per-category rating deviation, volatility, and last-rated timestamps for existing accounts, while also backfilling untouched legacy `1200` defaults toward the new `1500` starting point and seeding more stable deviation buckets for accounts with rated history
+
+### Changed
+
+- updated [prisma/schema.prisma](/Users/jaroslavsvetlik/Documents/NextJS/chess/prisma/schema.prisma) so new registered accounts now start at `1500` in bullet, blitz, and rapid, and each pool persists its own `rating + deviation + volatility + lastRatedAt` state instead of only a single integer score
+- replaced the flat `K=24` Elo logic in [lib/rating.ts](/Users/jaroslavsvetlik/Documents/NextJS/chess/lib/rating.ts) with a tuned Glicko-2-style engine that gives provisional players much larger early movements, gradually calms down as the account stabilizes, and increases uncertainty again after inactivity
+- updated [lib/games.ts](/Users/jaroslavsvetlik/Documents/NextJS/chess/lib/games.ts), [lib/game-presence.ts](/Users/jaroslavsvetlik/Documents/NextJS/chess/lib/game-presence.ts), and [lib/realtime-snapshots.ts](/Users/jaroslavsvetlik/Documents/NextJS/chess/lib/realtime-snapshots.ts) so rated game settlement, live room snapshots, and timeout finishes all carry the richer rating state needed by the new engine
+- updated [components/game/live-board.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/game/live-board.tsx), [components/game/game-room-shell.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/game/game-room-shell.tsx), [components/game/game-replay-shell.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/game/game-replay-shell.tsx), [lib/public.ts](/Users/jaroslavsvetlik/Documents/NextJS/chess/lib/public.ts), [app/leaderboard/page.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/leaderboard/page.tsx), and [app/players/[userId]/page.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/players/[userId]/page.tsx) so provisional ratings are now surfaced with a `?` marker on live, replay, leaderboard, and public-profile views
+- bumped the runtime version in [package.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package.json) to `0.6.17`, updated the root package version in [package-lock.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package-lock.json), and refreshed the reported version in [README.md](/Users/jaroslavsvetlik/Documents/NextJS/chess/README.md)
+
 ## [0.6.16] - 2026-03-22
 
 Production hotfix focused on making opening-phase flag falls count as real time losses.

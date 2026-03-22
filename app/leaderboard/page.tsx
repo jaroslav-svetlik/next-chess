@@ -14,6 +14,10 @@ function formatJoinedAt(value: string) {
   }).format(new Date(value));
 }
 
+function formatRating(value: number, provisional: boolean) {
+  return provisional ? `${value}?` : `${value}`;
+}
+
 export default async function LeaderboardPage({
   searchParams
 }: {
@@ -72,10 +76,12 @@ export default async function LeaderboardPage({
                 >
                   <span className="leaderboard-rank">{player.rank}</span>
                   <span className="leaderboard-player-name">{player.name}</span>
-                  <strong className="leaderboard-primary-rating">{player.rating}</strong>
-                  <span>{player.ratings.bullet}</span>
-                  <span>{player.ratings.blitz}</span>
-                  <span>{player.ratings.rapid}</span>
+                  <strong className="leaderboard-primary-rating">
+                    {formatRating(player.rating, player.provisional)}
+                  </strong>
+                  <span>{formatRating(player.ratings.bullet, player.provisionalRatings.bullet)}</span>
+                  <span>{formatRating(player.ratings.blitz, player.provisionalRatings.blitz)}</span>
+                  <span>{formatRating(player.ratings.rapid, player.provisionalRatings.rapid)}</span>
                 </Link>
               ))}
             </div>
@@ -91,7 +97,9 @@ export default async function LeaderboardPage({
                 <Link className="leaderboard-podium-card" href={`/players/${player.slug}`} key={player.id}>
                   <span className="leaderboard-podium-rank">#{player.rank}</span>
                   <strong>{player.name}</strong>
-                  <span className="leaderboard-podium-rating">{player.rating}</span>
+                  <span className="leaderboard-podium-rating">
+                    {formatRating(player.rating, player.provisional)}
+                  </span>
                   <small>Joined {formatJoinedAt(player.joinedAt)}</small>
                 </Link>
               ))}

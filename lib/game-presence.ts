@@ -86,8 +86,17 @@ export async function updateGamePresence(input: {
                   name: true,
                   displayName: true,
                   ratingRapid: true,
+                  ratingRapidDeviation: true,
+                  ratingRapidVolatility: true,
+                  ratingRapidLastRatedAt: true,
                   ratingBlitz: true,
-                  ratingBullet: true
+                  ratingBlitzDeviation: true,
+                  ratingBlitzVolatility: true,
+                  ratingBlitzLastRatedAt: true,
+                  ratingBullet: true,
+                  ratingBulletDeviation: true,
+                  ratingBulletVolatility: true,
+                  ratingBulletLastRatedAt: true
                 }
               },
               guestIdentity: {

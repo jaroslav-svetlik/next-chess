@@ -42,6 +42,10 @@ function formatOutcome(outcome: "win" | "loss" | "draw") {
   return "Draw";
 }
 
+function formatRating(value: number, provisional: boolean) {
+  return provisional ? `${value}?` : `${value}`;
+}
+
 export default async function PlayerProfilePage({
   params,
   searchParams
@@ -124,28 +128,46 @@ export default async function PlayerProfilePage({
               <div>
                 <strong>Bullet</strong>
                 <div className="muted">
-                  {data.user.ranks.bullet ? `Rank #${data.user.ranks.bullet}` : "Hidden from board"}
+                  {data.user.provisionalRatings.bullet
+                    ? "Provisional"
+                    : data.user.ranks.bullet
+                      ? `Rank #${data.user.ranks.bullet}`
+                      : "Hidden from board"}
                 </div>
               </div>
-              <span className="leaderboard-podium-rating">{data.user.ratings.bullet}</span>
+              <span className="leaderboard-podium-rating">
+                {formatRating(data.user.ratings.bullet, data.user.provisionalRatings.bullet)}
+              </span>
             </div>
             <div className="player-rating-row">
               <div>
                 <strong>Blitz</strong>
                 <div className="muted">
-                  {data.user.ranks.blitz ? `Rank #${data.user.ranks.blitz}` : "Hidden from board"}
+                  {data.user.provisionalRatings.blitz
+                    ? "Provisional"
+                    : data.user.ranks.blitz
+                      ? `Rank #${data.user.ranks.blitz}`
+                      : "Hidden from board"}
                 </div>
               </div>
-              <span className="leaderboard-podium-rating">{data.user.ratings.blitz}</span>
+              <span className="leaderboard-podium-rating">
+                {formatRating(data.user.ratings.blitz, data.user.provisionalRatings.blitz)}
+              </span>
             </div>
             <div className="player-rating-row">
               <div>
                 <strong>Rapid</strong>
                 <div className="muted">
-                  {data.user.ranks.rapid ? `Rank #${data.user.ranks.rapid}` : "Hidden from board"}
+                  {data.user.provisionalRatings.rapid
+                    ? "Provisional"
+                    : data.user.ranks.rapid
+                      ? `Rank #${data.user.ranks.rapid}`
+                      : "Hidden from board"}
                 </div>
               </div>
-              <span className="leaderboard-podium-rating">{data.user.ratings.rapid}</span>
+              <span className="leaderboard-podium-rating">
+                {formatRating(data.user.ratings.rapid, data.user.provisionalRatings.rapid)}
+              </span>
             </div>
           </div>
         </section>

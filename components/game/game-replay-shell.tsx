@@ -15,6 +15,7 @@ type ReplayPlayer = {
   name: string;
   profileId: string | null;
   rating: number | null;
+  provisional: boolean;
 };
 
 type ReplayMove = {
@@ -71,6 +72,14 @@ function formatEndedAt(value: string | null) {
     dateStyle: "medium",
     timeStyle: "short"
   }).format(new Date(value));
+}
+
+function formatRating(value: number | null, provisional: boolean) {
+  if (value === null) {
+    return null;
+  }
+
+  return provisional ? `${value}?` : `${value}`;
 }
 
 function buildReplayPosition(moves: ReplayMove[], ply: number) {
@@ -242,7 +251,7 @@ export function GameReplayShell({ game }: GameReplayShellProps) {
               </strong>
               {topPlayer?.rating !== null && topPlayer?.rating !== undefined ? (
                 <div className="player-rating-line">
-                  <span>{topPlayer.rating}</span>
+                  <span>{formatRating(topPlayer.rating, topPlayer.provisional)}</span>
                 </div>
               ) : null}
             </div>
@@ -299,7 +308,7 @@ export function GameReplayShell({ game }: GameReplayShellProps) {
               </strong>
               {bottomPlayer?.rating !== null && bottomPlayer?.rating !== undefined ? (
                 <div className="player-rating-line">
-                  <span>{bottomPlayer.rating}</span>
+                  <span>{formatRating(bottomPlayer.rating, bottomPlayer.provisional)}</span>
                 </div>
               ) : null}
             </div>

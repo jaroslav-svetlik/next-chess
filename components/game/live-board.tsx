@@ -27,6 +27,7 @@ type PlayerState = {
   isConnected: boolean;
   name: string;
   rating: number | null;
+  provisional: boolean;
   ratingDelta: number | null;
   ratingAfter: number | null;
 };
@@ -280,6 +281,14 @@ function formatRatingDelta(value: number | null) {
   }
 
   return value > 0 ? `+${value}` : `${value}`;
+}
+
+function formatDisplayedRating(player: PlayerState | null) {
+  if (!player || player.rating === null) {
+    return null;
+  }
+
+  return player.provisional ? `${player.rating}?` : `${player.rating}`;
 }
 
 export function LiveBoard({
@@ -794,7 +803,7 @@ export function LiveBoard({
               <strong>{displayPlayerName(topPlayer.player, topPlayer.fallback, topPlayer.color)}</strong>
               {topRatedPlayer && topRatedPlayer.rating !== null ? (
                 <div className="player-rating-line">
-                  <span>{topRatedPlayer.rating}</span>
+                  <span>{formatDisplayedRating(topRatedPlayer)}</span>
                   {rated && topRatedPlayer.ratingDelta !== null ? (
                     <span className={`rating-delta ${topRatedPlayer.ratingDelta >= 0 ? "up" : "down"}`}>
                       {formatRatingDelta(topRatedPlayer.ratingDelta)}
@@ -997,7 +1006,7 @@ export function LiveBoard({
               </strong>
               {bottomRatedPlayer && bottomRatedPlayer.rating !== null ? (
                 <div className="player-rating-line">
-                  <span>{bottomRatedPlayer.rating}</span>
+                  <span>{formatDisplayedRating(bottomRatedPlayer)}</span>
                   {rated && bottomRatedPlayer.ratingDelta !== null ? (
                     <span
                       className={`rating-delta ${bottomRatedPlayer.ratingDelta >= 0 ? "up" : "down"}`}

@@ -6,7 +6,7 @@ This repository is the public alpha codebase behind the project. The goal is not
 
 - Repository: [jaroslav-svetlik/next-chess](https://github.com/jaroslav-svetlik/next-chess)
 - Live site: [nextchess.org](https://nextchess.org)
-- Current version: `0.6.16`
+- Current version: `0.6.17`
 - Changelog: [CHANGELOG.md](./CHANGELOG.md)
 - Platform plan: [docs/chess-platform-plan.md](./docs/chess-platform-plan.md)
 - Release process: [docs/release-process.md](./docs/release-process.md)
@@ -51,7 +51,7 @@ Many chess side projects stop at "move pieces on a board." NextChess is being bu
 ### Competitive Layer
 
 - Rated and casual flows
-- Elo ratings for bullet, blitz, and rapid
+- Glicko-2-style ratings for bullet, blitz, and rapid, with provisional starts and stronger early swings
 - Public leaderboard
 - Username-based public profiles
 - Paginated player game history

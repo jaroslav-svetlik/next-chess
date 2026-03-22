@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { formatCategoryLabel, formatControl } from "@/lib/game-config";
 import { GUEST_EMAIL_DOMAIN, isGuestEmail } from "@/lib/guest-accounts";
 import { getCapturedPieces, getPositionFlags, serializeBoard } from "@/lib/chess-engine";
+import { RATING_PROVISIONAL_DEVIATION } from "@/lib/rating";
 
 export type LeaderboardCategory = "bullet" | "blitz" | "rapid";
 export type PlayerHistoryCategoryFilter = "all" | "bullet" | "blitz" | "rapid" | "custom";
@@ -41,6 +42,18 @@ function getRatingField(category: LeaderboardCategory) {
   }
 
   return "ratingRapid";
+}
+
+function getRatingDeviationField(category: LeaderboardCategory) {
+  if (category === "bullet") {
+    return "ratingBulletDeviation";
+  }
+
+  if (category === "blitz") {
+    return "ratingBlitzDeviation";
+  }
+
+  return "ratingRapidDeviation";
 }
 
 function getCategoryMeta(category: LeaderboardCategory) {
@@ -217,6 +230,7 @@ export function normalizeLeaderboardCategory(
 
 export async function getLeaderboardData(category: LeaderboardCategory) {
   const ratingField = getRatingField(category);
+  const deviationField = getRatingDeviationField(category);
   const meta = getCategoryMeta(category);
 
   const players = await db.user.findMany({
@@ -239,8 +253,11 @@ export async function getLeaderboardData(category: LeaderboardCategory) {
       username: true,
       displayName: true,
       ratingBullet: true,
+      ratingBulletDeviation: true,
       ratingBlitz: true,
+      ratingBlitzDeviation: true,
       ratingRapid: true,
+      ratingRapidDeviation: true,
       createdAt: true
     },
     take: 50
@@ -260,7 +277,13 @@ export async function getLeaderboardData(category: LeaderboardCategory) {
         blitz: player.ratingBlitz,
         rapid: player.ratingRapid
       },
+      provisionalRatings: {
+        bullet: player.ratingBulletDeviation > RATING_PROVISIONAL_DEVIATION,
+        blitz: player.ratingBlitzDeviation > RATING_PROVISIONAL_DEVIATION,
+        rapid: player.ratingRapidDeviation > RATING_PROVISIONAL_DEVIATION
+      },
       rating: player[ratingField],
+      provisional: player[deviationField] > RATING_PROVISIONAL_DEVIATION,
       joinedAt: player.createdAt.toISOString()
     }))
   };
@@ -291,8 +314,11 @@ export async function getPlayerProfileDataWithHistory(
     createdAt: true,
     moderationStatus: true,
     ratingBullet: true,
+    ratingBulletDeviation: true,
     ratingBlitz: true,
-    ratingRapid: true
+    ratingBlitzDeviation: true,
+    ratingRapid: true,
+    ratingRapidDeviation: true
   } as const;
 
   const user =
@@ -480,6 +506,11 @@ export async function getPlayerProfileDataWithHistory(
         blitz: user.ratingBlitz,
         rapid: user.ratingRapid
       },
+      provisionalRatings: {
+        bullet: user.ratingBulletDeviation > RATING_PROVISIONAL_DEVIATION,
+        blitz: user.ratingBlitzDeviation > RATING_PROVISIONAL_DEVIATION,
+        rapid: user.ratingRapidDeviation > RATING_PROVISIONAL_DEVIATION
+      },
       ranks: {
         bullet: betterBullet === null ? null : betterBullet + 1,
         blitz: betterBlitz === null ? null : betterBlitz + 1,
@@ -580,8 +611,11 @@ export async function getPublicGameReplayData(gameId: string) {
               username: true,
               displayName: true,
               ratingBullet: true,
+              ratingBulletDeviation: true,
               ratingBlitz: true,
-              ratingRapid: true
+              ratingBlitzDeviation: true,
+              ratingRapid: true,
+              ratingRapidDeviation: true
             }
           },
           guestIdentity: {
@@ -648,7 +682,12 @@ export async function getPublicGameReplayData(gameId: string) {
           ? getCategoryRating(player.user, game.timeCategory)
           : player.user
             ? getCategoryRating(player.user, game.timeCategory)
-            : null
+            : null,
+      provisional:
+        player.user
+          ? getCategoryRatingDeviation(player.user, game.timeCategory) >
+            RATING_PROVISIONAL_DEVIATION
+          : false
     })),
     moves: game.moves.map((move) => ({
       id: move.id,
@@ -680,6 +719,25 @@ function getCategoryRating(
   }
 
   return user.ratingRapid;
+}
+
+function getCategoryRatingDeviation(
+  user: {
+    ratingBulletDeviation: number;
+    ratingBlitzDeviation: number;
+    ratingRapidDeviation: number;
+  },
+  timeCategory: TimeCategory
+) {
+  if (timeCategory === TimeCategory.BULLET) {
+    return user.ratingBulletDeviation;
+  }
+
+  if (timeCategory === TimeCategory.BLITZ) {
+    return user.ratingBlitzDeviation;
+  }
+
+  return user.ratingRapidDeviation;
 }
 
 export function getLeaderboardCategoryOptions() {

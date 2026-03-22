@@ -55,9 +55,18 @@ model User {
   username     String?        @unique
   displayName  String?
   avatarUrl    String?
-  ratingRapid  Int            @default(1200)
-  ratingBlitz  Int            @default(1200)
-  ratingBullet Int            @default(1200)
+  ratingRapid  Int            @default(1500)
+  ratingRapidDeviation Float  @default(250)
+  ratingRapidVolatility Float @default(0.06)
+  ratingRapidLastRatedAt DateTime?
+  ratingBlitz  Int            @default(1500)
+  ratingBlitzDeviation Float  @default(250)
+  ratingBlitzVolatility Float @default(0.06)
+  ratingBlitzLastRatedAt DateTime?
+  ratingBullet Int            @default(1500)
+  ratingBulletDeviation Float @default(250)
+  ratingBulletVolatility Float @default(0.06)
+  ratingBulletLastRatedAt DateTime?
   moderationStatus ModerationStatus @default(CLEAN)
   moderationUpdatedAt DateTime?
   moderationUpdatedByEmail String?

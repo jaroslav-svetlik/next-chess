@@ -31,7 +31,12 @@ import {
 } from "./game-timing.ts";
 import { maybeAutoRaiseObserveForGame } from "./moderation-policy.ts";
 import { logInfo, logWarn } from "./observability.ts";
-import { applyRatingAdjustment, getRatingField, getUserRatingByCategory } from "./rating.ts";
+import {
+  applyRatingAdjustment,
+  getRatingField,
+  getUserRatingByCategory,
+  isCategoryRatingProvisional
+} from "./rating.ts";
 import type { RequestActor } from "./request-actor.ts";
 import { publishGameUpdate, publishLobbyUpdate } from "./realtime.ts";
 import { createAntiCheatReviewEvent } from "./review-events.ts";
@@ -42,8 +47,17 @@ const participantUserSelect = {
   name: true,
   displayName: true,
   ratingRapid: true,
+  ratingRapidDeviation: true,
+  ratingRapidVolatility: true,
+  ratingRapidLastRatedAt: true,
   ratingBlitz: true,
-  ratingBullet: true
+  ratingBlitzDeviation: true,
+  ratingBlitzVolatility: true,
+  ratingBlitzLastRatedAt: true,
+  ratingBullet: true,
+  ratingBulletDeviation: true,
+  ratingBulletVolatility: true,
+  ratingBulletLastRatedAt: true
 } satisfies Prisma.UserSelect;
 
 const participantGuestSelect = {
@@ -740,6 +754,7 @@ export function serializeGameSnapshot(game: GameDetailRecord) {
     isConnected: player.isConnected,
     name: getParticipantName(player),
     rating: player.user ? getUserRatingByCategory(player.user, game.timeCategory) : null,
+    provisional: player.user ? isCategoryRatingProvisional(player.user, game.timeCategory) : false,
     ratingDelta:
       player.color === PlayerColor.WHITE
         ? (ratingPayload?.whiteDelta ?? null)

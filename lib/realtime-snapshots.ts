@@ -8,7 +8,7 @@ import {
 import { db } from "./db.ts";
 import { formatCategoryLabel, formatControl } from "./game-config.ts";
 import { OPENING_WINDOW_MS } from "./game-timing.ts";
-import { getUserRatingByCategory } from "./rating.ts";
+import { getUserRatingByCategory, isCategoryRatingProvisional } from "./rating.ts";
 
 const participantUserSelect = {
   id: true,
@@ -16,8 +16,17 @@ const participantUserSelect = {
   name: true,
   displayName: true,
   ratingRapid: true,
+  ratingRapidDeviation: true,
+  ratingRapidVolatility: true,
+  ratingRapidLastRatedAt: true,
   ratingBlitz: true,
-  ratingBullet: true
+  ratingBlitzDeviation: true,
+  ratingBlitzVolatility: true,
+  ratingBlitzLastRatedAt: true,
+  ratingBullet: true,
+  ratingBulletDeviation: true,
+  ratingBulletVolatility: true,
+  ratingBulletLastRatedAt: true
 } satisfies Prisma.UserSelect;
 
 const participantGuestSelect = {
@@ -209,6 +218,7 @@ function serializeGameSnapshot(game: GameDetailRecord) {
     isConnected: player.isConnected,
     name: getParticipantName(player),
     rating: player.user ? getUserRatingByCategory(player.user, game.timeCategory) : null,
+    provisional: player.user ? isCategoryRatingProvisional(player.user, game.timeCategory) : false,
     ratingDelta:
       player.color === PlayerColor.WHITE
         ? (ratingPayload?.whiteDelta ?? null)

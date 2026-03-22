@@ -63,6 +63,7 @@ type GameDetail = {
     isConnected: boolean;
     name: string;
     rating: number | null;
+    provisional: boolean;
     ratingDelta: number | null;
     ratingAfter: number | null;
   }>;

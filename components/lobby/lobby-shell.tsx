@@ -326,9 +326,11 @@ export function LobbyShell() {
             >
               Create game
             </button>
-            <a className="secondary-button" href="/auth/register">
-              Full auth setup
-            </a>
+            {!session?.user ? (
+              <a className="secondary-button" href="/auth/register">
+                Full auth setup
+              </a>
+            ) : null}
           </div>
         </div>
       </aside>

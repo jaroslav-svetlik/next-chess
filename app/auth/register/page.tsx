@@ -1,8 +1,16 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { AuthForm } from "@/components/auth/auth-form";
+import { getSession } from "@/lib/session";
 
-export default function RegisterPage() {
+export default async function RegisterPage() {
+  const session = await getSession();
+
+  if (session?.user) {
+    redirect("/lobby");
+  }
+
   return (
     <main className="content-wrap auth-page">
       <div className="auth-grid">

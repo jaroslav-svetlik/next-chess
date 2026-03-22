@@ -2890,6 +2890,167 @@ select {
   font-size: 0.84rem;
 }
 
+.field-hint-error {
+  color: #ffd9d3;
+}
+
+.password-strength-meter {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.9rem 0.95rem;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.08), transparent 42%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.025));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 16px 30px rgba(0, 8, 20, 0.14);
+}
+
+.password-strength-meter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.password-strength-meter-title {
+  margin: 0;
+}
+
+.password-strength-meter-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.9rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--gold-strong);
+}
+
+.password-strength-meter-track {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.password-strength-meter-bar {
+  position: relative;
+  overflow: hidden;
+  height: 0.62rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  transition:
+    background 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease,
+    opacity 180ms ease;
+}
+
+.password-strength-meter-bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.password-strength-meter-bar.active {
+  transform: translateY(-1px);
+}
+
+.password-strength-meter-bar.active::after {
+  opacity: 1;
+}
+
+.password-strength-meter.strength-1 {
+  border-color: rgba(255, 123, 114, 0.2);
+  background:
+    radial-gradient(circle at top right, rgba(255, 123, 114, 0.16), transparent 44%),
+    linear-gradient(180deg, rgba(255, 123, 114, 0.08), rgba(255, 255, 255, 0.02));
+}
+
+.password-strength-meter.strength-1 .password-strength-meter-badge,
+.password-strength-meter.strength-2 .password-strength-meter-badge {
+  background: linear-gradient(135deg, rgba(255, 123, 114, 0.24), rgba(255, 159, 122, 0.18));
+  color: #ffe1dc;
+}
+
+.password-strength-meter.strength-1 .password-strength-meter-bar.active,
+.password-strength-meter.strength-2 .password-strength-meter-bar.active {
+  background: linear-gradient(90deg, #ff7b72, #ffb38a);
+  box-shadow: 0 0 18px rgba(255, 123, 114, 0.22);
+}
+
+.password-strength-meter.strength-1 .password-strength-meter-bar.active::after,
+.password-strength-meter.strength-2 .password-strength-meter-bar.active::after {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.28), transparent 70%);
+}
+
+.password-strength-meter.strength-2 {
+  border-color: rgba(255, 159, 122, 0.2);
+  background:
+    radial-gradient(circle at top right, rgba(255, 159, 122, 0.18), transparent 44%),
+    linear-gradient(180deg, rgba(255, 159, 122, 0.08), rgba(255, 255, 255, 0.02));
+}
+
+.password-strength-meter.strength-3 {
+  border-color: rgba(255, 196, 87, 0.2);
+  background:
+    radial-gradient(circle at top right, rgba(255, 196, 87, 0.18), transparent 44%),
+    linear-gradient(180deg, rgba(255, 196, 87, 0.08), rgba(255, 255, 255, 0.02));
+}
+
+.password-strength-meter.strength-3 .password-strength-meter-badge {
+  background: linear-gradient(135deg, rgba(255, 196, 87, 0.24), rgba(255, 225, 135, 0.18));
+  color: #fff1c0;
+}
+
+.password-strength-meter.strength-3 .password-strength-meter-bar.active {
+  background: linear-gradient(90deg, #ffc457, #ffe187);
+  box-shadow: 0 0 18px rgba(255, 196, 87, 0.2);
+}
+
+.password-strength-meter.strength-3 .password-strength-meter-bar.active::after {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.32), transparent 72%);
+}
+
+.password-strength-meter.strength-4,
+.password-strength-meter.strength-5 {
+  border-color: rgba(87, 230, 255, 0.22);
+  background:
+    radial-gradient(circle at top right, rgba(87, 230, 255, 0.2), transparent 44%),
+    linear-gradient(180deg, rgba(61, 125, 255, 0.08), rgba(255, 255, 255, 0.02));
+}
+
+.password-strength-meter.strength-4 .password-strength-meter-badge,
+.password-strength-meter.strength-5 .password-strength-meter-badge {
+  background: linear-gradient(135deg, rgba(87, 230, 255, 0.24), rgba(61, 125, 255, 0.18));
+  color: #ebfcff;
+}
+
+.password-strength-meter.strength-4 .password-strength-meter-bar.active,
+.password-strength-meter.strength-5 .password-strength-meter-bar.active {
+  background: linear-gradient(90deg, #57e6ff, #3d7dff);
+  box-shadow: 0 0 20px rgba(87, 230, 255, 0.22);
+}
+
+.password-strength-meter.strength-4 .password-strength-meter-bar.active::after,
+.password-strength-meter.strength-5 .password-strength-meter-bar.active::after {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.34), transparent 72%);
+}
+
+.password-strength-meter-label {
+  margin: 0;
+}
+
 .field input,
 .field select {
   border: 1px solid var(--line);
@@ -2904,6 +3065,52 @@ select {
 .field select:focus {
   border-color: rgba(87, 230, 255, 0.45);
   box-shadow: 0 0 0 4px rgba(87, 230, 255, 0.08);
+}
+
+.auth-password-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.auth-password-row input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.auth-inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.auth-inline-button {
+  min-height: 2.75rem;
+  padding: 0.72rem 1rem;
+  border-radius: 18px;
+}
+
+.auth-password-confirmation {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem 1.05rem 1.1rem;
+  border-radius: 24px;
+  border: 1px solid rgba(87, 230, 255, 0.18);
+  background:
+    linear-gradient(180deg, rgba(87, 230, 255, 0.09), rgba(61, 125, 255, 0.05)),
+    rgba(7, 18, 32, 0.72);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 18px 36px rgba(0, 8, 20, 0.2);
+}
+
+.auth-password-confirmation strong {
+  color: var(--gold-strong);
+}
+
+.auth-password-confirmation p {
+  margin: 0;
+  color: var(--muted);
 }
 
 .auth-card {

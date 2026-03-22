@@ -8,6 +8,23 @@ Version source of truth:
 
 The project is still in `0.x`, so versions represent active alpha milestones and can change quickly.
 
+## [0.6.11] - 2026-03-22
+
+Patch release focused on strengthening the registration password flow and making the password UX more explicit.
+
+### Added
+
+- added [lib/password.ts](/Users/jaroslavsvetlik/Documents/NextJS/chess/lib/password.ts) with shared strong-password validation, strength scoring, and secure password generation so the registration flow uses one consistent password policy end to end
+
+### Changed
+
+- updated [components/auth/auth-form.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/auth/auth-form.tsx) and [app/globals.css](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/globals.css) so registration now offers `Generate strong password`, a more colorful password-strength meter, clearer inline guidance, and an explicit confirmation step that requires the user to confirm the password has been saved before the account is created
+- bumped the runtime version in [package.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package.json) to `0.6.11`, updated the root package version in [package-lock.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package-lock.json), and refreshed the reported version in [README.md](/Users/jaroslavsvetlik/Documents/NextJS/chess/README.md)
+
+### Security
+
+- updated [lib/auth.ts](/Users/jaroslavsvetlik/Documents/NextJS/chess/lib/auth.ts) so the Better Auth sign-up endpoint now rejects weak passwords server-side too, preventing bypasses of the client-only registration UI
+
 ## [0.6.10] - 2026-03-22
 
 Production hotfix focused on restoring the waiting-room worker after the `0.6.9` lifecycle release.

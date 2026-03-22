@@ -1,9 +1,16 @@
 "use client";
 
+import type { ChangeEvent, FormEvent } from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { authClient } from "@/lib/auth-client";
+import {
+  MIN_STRONG_PASSWORD_LENGTH,
+  generateStrongPassword,
+  getPasswordStrength,
+  validateStrongPassword
+} from "@/lib/password";
 import { normalizeUsername, validateUsername } from "@/lib/username";
 
 type AuthMode = "login" | "register";
@@ -12,10 +19,22 @@ type AuthFormProps = {
   mode: AuthMode;
 };
 
+type RegisterPayload = {
+  email: string;
+  name: string;
+  password: string;
+  username: string;
+};
+
 export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
+  const [passwordValue, setPasswordValue] = useState("");
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [generatedPasswordNotice, setGeneratedPasswordNotice] = useState<string | null>(null);
+  const [pendingRegistration, setPendingRegistration] = useState<RegisterPayload | null>(null);
+  const [confirmedSavedPassword, setConfirmedSavedPassword] = useState<string | null>(null);
 
   function mapAuthError(message: string | undefined, email: string, username?: string) {
     const normalized = message?.toLowerCase() ?? "";
@@ -45,10 +64,102 @@ export function AuthForm({ mode }: AuthFormProps) {
     return message ?? (mode === "register" ? "Registration failed." : "Login failed.");
   }
 
-  async function handleSubmit(formData: FormData) {
+  async function submitRegistration({ email, name, password, username }: RegisterPayload) {
     setError(null);
     setIsPending(true);
 
+    try {
+      const usernameCheckResponse = await fetch(
+        `/api/auth/username?username=${encodeURIComponent(username)}`,
+        {
+          cache: "no-store"
+        }
+      );
+      const usernameCheckPayload = (await usernameCheckResponse.json().catch(() => null)) as
+        | {
+            available?: boolean;
+            error?: string | null;
+          }
+        | null;
+
+      if (!usernameCheckResponse.ok || usernameCheckPayload?.available === false) {
+        setError(
+          usernameCheckPayload?.error ?? `Username "${username}" is already taken. Choose another one.`
+        );
+        return;
+      }
+
+      const response = await fetch("/api/auth/sign-up/email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          name: username,
+          username,
+          displayName: name || undefined
+        })
+      });
+      const payload = (await response.json().catch(() => null)) as
+        | {
+            message?: string;
+            error?: {
+              message?: string;
+            };
+          }
+        | null;
+
+      if (!response.ok) {
+        setError(mapAuthError(payload?.error?.message ?? payload?.message, email, username));
+        return;
+      }
+
+      router.push("/lobby");
+      router.refresh();
+    } catch {
+      setError("Unexpected auth error. Check Better Auth env and database setup.");
+    } finally {
+      setIsPending(false);
+    }
+  }
+
+  async function submitLogin(email: string, password: string) {
+    setError(null);
+    setIsPending(true);
+
+    try {
+      const result = await authClient.signIn.email({
+        email,
+        password
+      });
+
+      if (result.error) {
+        setError(mapAuthError(result.error.message, email));
+        return;
+      }
+
+      router.push("/lobby");
+      router.refresh();
+    } catch {
+      setError("Unexpected auth error. Check Better Auth env and database setup.");
+    } finally {
+      setIsPending(false);
+    }
+  }
+
+  async function handleSavedPasswordConfirmation() {
+    if (!pendingRegistration) {
+      return;
+    }
+
+    setConfirmedSavedPassword(pendingRegistration.password);
+    setPendingRegistration(null);
+    await submitRegistration(pendingRegistration);
+  }
+
+  async function handleSubmit(formData: FormData) {
     const name = String(formData.get("name") ?? "").trim();
     const rawUsername = String(formData.get("username") ?? "");
     const username = normalizeUsername(rawUsername);
@@ -57,86 +168,93 @@ export function AuthForm({ mode }: AuthFormProps) {
       .toLowerCase();
     const password = String(formData.get("password") ?? "");
 
-    try {
-      if (mode === "register") {
-        const usernameValidationError = validateUsername(username);
-        if (usernameValidationError) {
-          setError(usernameValidationError);
-          return;
-        }
-
-        const usernameCheckResponse = await fetch(
-          `/api/auth/username?username=${encodeURIComponent(username)}`,
-          {
-            cache: "no-store"
-          }
-        );
-        const usernameCheckPayload = (await usernameCheckResponse.json().catch(() => null)) as
-          | {
-              available?: boolean;
-              error?: string | null;
-            }
-          | null;
-
-        if (!usernameCheckResponse.ok || usernameCheckPayload?.available === false) {
-          setError(
-            usernameCheckPayload?.error ?? `Username "${username}" is already taken. Choose another one.`
-          );
-          return;
-        }
-
-        const response = await fetch("/api/auth/sign-up/email", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            email,
-            password,
-            name: username,
-            username,
-            displayName: name || undefined
-          })
-        });
-        const payload = (await response.json().catch(() => null)) as
-          | {
-              message?: string;
-              error?: {
-                message?: string;
-              };
-            }
-          | null;
-
-        if (!response.ok) {
-          setError(mapAuthError(payload?.error?.message ?? payload?.message, email, username));
-        } else {
-          router.push("/lobby");
-          router.refresh();
-        }
-      } else {
-        const result = await authClient.signIn.email({
-          email,
-          password
-        });
-
-        if (result.error) {
-          setError(mapAuthError(result.error.message, email));
-        } else {
-          router.push("/lobby");
-          router.refresh();
-        }
+    if (mode === "register") {
+      const usernameValidationError = validateUsername(username);
+      if (usernameValidationError) {
+        setError(usernameValidationError);
+        setPendingRegistration(null);
+        return;
       }
-    } catch {
-      setError("Unexpected auth error. Check Better Auth env and database setup.");
-    } finally {
-      setIsPending(false);
+
+      const passwordValidationError = validateStrongPassword(password);
+      if (passwordValidationError) {
+        setError(passwordValidationError);
+        setPendingRegistration(null);
+        return;
+      }
+
+      const registrationPayload = {
+        email,
+        name,
+        password,
+        username
+      };
+
+      if (confirmedSavedPassword !== password) {
+        setError("Save the password first, then confirm that it is stored.");
+        setPendingRegistration(registrationPayload);
+        return;
+      }
+
+      setPendingRegistration(null);
+      await submitRegistration(registrationPayload);
+      return;
+    }
+
+    await submitLogin(email, password);
+  }
+
+  function handleFormSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void handleSubmit(new FormData(event.currentTarget));
+  }
+
+  function handlePasswordChange(event: ChangeEvent<HTMLInputElement>) {
+    setPasswordValue(event.target.value);
+    setGeneratedPasswordNotice(null);
+
+    if (confirmedSavedPassword !== null) {
+      setConfirmedSavedPassword(null);
+    }
+
+    if (pendingRegistration) {
+      setPendingRegistration(null);
     }
   }
+
+  function handleFormChange(event: ChangeEvent<HTMLFormElement>) {
+    if (mode !== "register") {
+      return;
+    }
+
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement) || target.name === "password") {
+      return;
+    }
+
+    if (pendingRegistration) {
+      setPendingRegistration(null);
+    }
+  }
+
+  function handleGeneratePassword() {
+    setPasswordValue(generateStrongPassword());
+    setIsPasswordVisible(true);
+    setGeneratedPasswordNotice("Strong password inserted. Save it before creating the account.");
+    setConfirmedSavedPassword(null);
+    setPendingRegistration(null);
+    setError(null);
+  }
+
+  const passwordValidationMessage =
+    mode === "register" && passwordValue ? validateStrongPassword(passwordValue) : null;
+  const passwordStrength = mode === "register" ? getPasswordStrength(passwordValue) : null;
 
   return (
     <form
       className="field-grid"
-      action={handleSubmit}
+      onChange={handleFormChange}
+      onSubmit={handleFormSubmit}
     >
       {mode === "register" ? (
         <div className="field">
@@ -178,18 +296,117 @@ export function AuthForm({ mode }: AuthFormProps) {
       </div>
       <div className="field">
         <label htmlFor="password">Password</label>
-        <input
-          autoComplete={mode === "register" ? "new-password" : "current-password"}
-          id="password"
-          name="password"
-          type="password"
-          placeholder="At least 8 characters"
-          required
-        />
+        <div className="auth-password-row">
+          <input
+            autoComplete={mode === "register" ? "new-password" : "current-password"}
+            id="password"
+            minLength={mode === "register" ? MIN_STRONG_PASSWORD_LENGTH : 8}
+            name="password"
+            onChange={handlePasswordChange}
+            placeholder={
+              mode === "register"
+                ? `At least ${MIN_STRONG_PASSWORD_LENGTH} characters`
+                : "At least 8 characters"
+            }
+            required
+            spellCheck={false}
+            type={mode === "register" && isPasswordVisible ? "text" : "password"}
+            value={passwordValue}
+          />
+          {mode === "register" ? (
+            <button
+              className="secondary-button auth-inline-button"
+              onClick={() => setIsPasswordVisible((currentValue) => !currentValue)}
+              type="button"
+            >
+              {isPasswordVisible ? "Hide" : "Show"}
+            </button>
+          ) : null}
+        </div>
+        {mode === "register" ? (
+          <div className="auth-inline-actions">
+            <button className="secondary-button auth-inline-button" onClick={handleGeneratePassword} type="button">
+              Generate strong password
+            </button>
+          </div>
+        ) : null}
+        {mode === "register" ? (
+          <p className="field-hint">
+            Use at least {MIN_STRONG_PASSWORD_LENGTH} characters with uppercase, lowercase,
+            number, and symbol.
+          </p>
+        ) : null}
+        {mode === "register" && passwordStrength ? (
+          <div
+            className={`password-strength-meter strength-${passwordStrength.score}`}
+            aria-live="polite"
+          >
+            <div className="password-strength-meter-header">
+              <p className="field-hint password-strength-meter-title">Password strength</p>
+              <span className="password-strength-meter-badge">{passwordStrength.label}</span>
+            </div>
+            <div className="password-strength-meter-track" aria-hidden="true">
+              {Array.from({ length: 5 }, (_, index) => (
+                <span
+                  className={`password-strength-meter-bar${index < passwordStrength.score ? " active" : ""}`}
+                  key={index}
+                />
+              ))}
+            </div>
+            <p className="field-hint password-strength-meter-label">
+              {passwordStrength.score <= 2
+                ? "Too predictable. Add length, mixed case, numbers, and symbols."
+                : passwordStrength.score === 3
+                  ? "Decent start. More length or uniqueness would make it stronger."
+                  : "This password is in strong shape. Save it before creating the account."}
+            </p>
+          </div>
+        ) : null}
+        {passwordValidationMessage ? (
+          <p className="field-hint field-hint-error">{passwordValidationMessage}</p>
+        ) : null}
+        {generatedPasswordNotice ? <p className="field-hint">{generatedPasswordNotice}</p> : null}
       </div>
       {error ? <p className="muted">{error}</p> : null}
-      <button className="primary-button" disabled={isPending} type="submit">
-        {isPending ? "Working..." : mode === "register" ? "Create account" : "Sign in"}
+      {mode === "register" && pendingRegistration ? (
+        <div className="auth-password-confirmation" role="alert">
+          <strong>Save this password before creating the account.</strong>
+          <p>Confirm only after you stored it in a password manager or another secure place.</p>
+          <div className="auth-inline-actions">
+            <button
+              className="primary-button translucent-cta"
+              disabled={isPending}
+              onClick={() => void handleSavedPasswordConfirmation()}
+              type="button"
+            >
+              {isPending ? "Working..." : "I saved it, create account"}
+            </button>
+            <button
+              className="secondary-button auth-inline-button"
+              disabled={isPending}
+              onClick={() => {
+                setPendingRegistration(null);
+                setError(null);
+              }}
+              type="button"
+            >
+              Not yet
+            </button>
+          </div>
+        </div>
+      ) : null}
+      <button
+        className="primary-button translucent-cta"
+        disabled={isPending || (mode === "register" && pendingRegistration !== null)}
+        type="submit"
+      >
+        {isPending
+          ? "Working..."
+          : mode === "register" && pendingRegistration
+            ? "Confirm saved password below"
+            : mode === "register"
+              ? "Create account"
+              : "Sign in"}
       </button>
     </form>
   );

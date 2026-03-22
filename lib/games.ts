@@ -21,7 +21,8 @@ import {
 import { cancelGameDeadlineJob, maybeEnforceExpiredGameDeadline, syncGameDeadlineJob } from "./game-deadline.ts";
 import { db } from "./db.ts";
 import { scheduleEngineReview } from "./engine-analysis.ts";
-import { formatCategoryLabel, formatControl, NormalizedGameSetup } from "./game-config.ts";
+import { formatCategoryLabel, formatControl } from "./game-config.ts";
+import type { NormalizedGameSetup } from "./game-config.ts";
 import { isGuestEmail } from "./guest-accounts.ts";
 import {
   OPENING_WINDOW_MS,

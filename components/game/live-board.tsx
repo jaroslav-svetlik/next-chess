@@ -146,9 +146,48 @@ function chessToBoardMatrix(chess: Chess): Array<Array<BoardPiece | null>> {
   });
 }
 
-function formatResult(result: string | null) {
+function formatResult(
+  result: string | null,
+  whitePlayer: PlayerState | null,
+  blackPlayer: PlayerState | null
+) {
   if (!result) {
     return null;
+  }
+
+  const whiteName = whitePlayer ? displayPlayerName(whitePlayer, "White", "WHITE") : "White";
+  const blackName = blackPlayer ? displayPlayerName(blackPlayer, "Black", "BLACK") : "Black";
+
+  if (result === "white_timeout") {
+    return `${whiteName} wins on time`;
+  }
+
+  if (result === "black_timeout") {
+    return `${blackName} wins on time`;
+  }
+
+  if (result === "white_checkmate") {
+    return `${whiteName} wins by checkmate`;
+  }
+
+  if (result === "black_checkmate") {
+    return `${blackName} wins by checkmate`;
+  }
+
+  if (result === "draw_stalemate") {
+    return "Draw by stalemate";
+  }
+
+  if (result === "draw_threefold_repetition") {
+    return "Draw by repetition";
+  }
+
+  if (result === "draw_insufficient_material") {
+    return "Draw by insufficient material";
+  }
+
+  if (result === "draw_fifty_move_rule") {
+    return "Draw by fifty-move rule";
   }
 
   return result.replaceAll("_", " ");
@@ -284,11 +323,13 @@ function formatRatingDelta(value: number | null) {
 }
 
 function formatDisplayedRating(player: PlayerState | null) {
-  if (!player || player.rating === null) {
+  const ratingValue = player?.ratingAfter ?? player?.rating ?? null;
+
+  if (!player || ratingValue === null) {
     return null;
   }
 
-  return player.provisional ? `${player.rating}?` : `${player.rating}`;
+  return player.provisional ? `${ratingValue}?` : `${ratingValue}`;
 }
 
 export function LiveBoard({
@@ -1033,7 +1074,11 @@ export function LiveBoard({
 
       <aside className="glass-panel game-side-panel">
         <div className={`status-banner ${status !== "ACTIVE" ? "finished" : ""}`}>
-          <span>{status === "ACTIVE" ? `${turnColor} to move` : formatResult(result) ?? "Game finished"}</span>
+          <span>
+            {status === "ACTIVE"
+              ? `${turnColor} to move`
+              : formatResult(result, whitePlayer, blackPlayer) ?? "Game finished"}
+          </span>
           {inCheck && status === "ACTIVE" ? <strong>Check</strong> : null}
         </div>
 

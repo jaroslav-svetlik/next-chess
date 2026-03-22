@@ -88,6 +88,33 @@ function getTimeoutResult(color: PlayerColor) {
   };
 }
 
+function buildClockTimeoutPlayerState(
+  game: DeadlineGameRecord,
+  timedOutPlayerId: string,
+  ratingAdjustment: Awaited<ReturnType<typeof applyRatingAdjustment>>
+) {
+  return game.players.map((player) => ({
+    playerId: player.id,
+    ...(player.id === timedOutPlayerId
+      ? {
+          timeRemainingMs: 0,
+          isConnected: false
+        }
+      : {}),
+    ...(ratingAdjustment
+      ? player.color === PlayerColor.WHITE
+        ? {
+            ratingDelta: ratingAdjustment.whiteDelta,
+            ratingAfter: ratingAdjustment.whiteAfter
+          }
+        : {
+            ratingDelta: ratingAdjustment.blackDelta,
+            ratingAfter: ratingAdjustment.blackAfter
+          }
+      : {})
+  }));
+}
+
 function getDeadlineForGame(game: DeadlineScheduleGame) {
   if (game.status !== GameStatus.ACTIVE || !game.turnStartedAt) {
     return null;
@@ -235,7 +262,10 @@ async function finalizeClockTimeout(tx: Prisma.TransactionClient, game: Deadline
 
   await createAntiCheatReviewEvent(tx, game.id);
 
-  return timedOut;
+  return {
+    game: timedOut,
+    ratingAdjustment
+  };
 }
 
 async function processDeadline(gameId: string, expectedTurnStartedAt?: string | null): Promise<DeadlineRunResult> {
@@ -289,13 +319,14 @@ async function processDeadline(gameId: string, expectedTurnStartedAt?: string | 
         } satisfies DeadlineRunResult;
       }
 
-      const finished = await finalizeClockTimeout(tx, existing);
-      if (!finished) {
+      const finishedOutcome = await finalizeClockTimeout(tx, existing);
+      if (!finishedOutcome) {
         return {
           status: "noop",
           reason: "missing_turn_player"
         } satisfies DeadlineRunResult;
       }
+      const finished = finishedOutcome.game;
       const timedOutPlayer = existing.players.find((entry) => entry.color === existing.turnColor);
 
       return {
@@ -314,13 +345,11 @@ async function processDeadline(gameId: string, expectedTurnStartedAt?: string | 
           openingWindowEndsAt: null,
           openingMovesRequired: 0,
           playerState: timedOutPlayer
-            ? [
-                {
-                  playerId: timedOutPlayer.id,
-                  timeRemainingMs: 0,
-                  isConnected: false
-                }
-              ]
+            ? buildClockTimeoutPlayerState(
+                finished,
+                timedOutPlayer.id,
+                finishedOutcome.ratingAdjustment
+              )
             : []
         }
       } satisfies DeadlineRunResult;

@@ -8,6 +8,19 @@ Version source of truth:
 
 The project is still in `0.x`, so versions represent active alpha milestones and can change quickly.
 
+## [0.6.19] - 2026-03-22
+
+Production live-game hotfix focused on making timeout finishes immediately readable and rated without requiring a manual refresh.
+
+### Fixed
+
+- updated [lib/game-deadline.ts](/Users/jaroslavsvetlik/Documents/NextJS/chess/lib/game-deadline.ts) so a worker-enforced timeout now publishes the same live rating delta and final rating values that players already got after a manual refresh, letting both registered players see the ELO swing immediately when the flag falls
+- updated [components/game/live-board.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/game/live-board.tsx) so the live result banner now renders timeout and other common finish reasons as readable winner text like `Alice wins on time` instead of exposing raw internal result codes such as `white_timeout`
+
+### Changed
+
+- bumped the runtime version in [package.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package.json) to `0.6.19`, updated the root package version in [package-lock.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package-lock.json), and refreshed the reported version in [README.md](/Users/jaroslavsvetlik/Documents/NextJS/chess/README.md)
+
 ## [0.6.18] - 2026-03-22
 
 Production auth hotfix focused on making registration failures around origin validation understandable and easier to configure correctly.

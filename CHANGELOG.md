@@ -8,6 +8,16 @@ Version source of truth:
 
 The project is still in `0.x`, so versions represent active alpha milestones and can change quickly.
 
+## [0.6.20] - 2026-03-23
+
+Navigation polish release focused on exposing the public GitHub repository directly from the site header.
+
+### Changed
+
+- updated [components/auth/header-auth-controls.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/auth/header-auth-controls.tsx) so the header now includes a dedicated `GitHub` button for both desktop and mobile navigation states, and the button includes an inline GitHub mark instead of plain text only
+- updated [app/globals.css](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/globals.css) with shared icon sizing for the new header CTA so the repo link stays visually aligned with the rest of the navigation buttons
+- bumped the runtime version in [package.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package.json) to `0.6.20`, updated the root package version in [package-lock.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package-lock.json), and refreshed the reported version in [README.md](/Users/jaroslavsvetlik/Documents/NextJS/chess/README.md)
+
 ## [0.6.19] - 2026-03-22
 
 Production live-game hotfix focused on making timeout finishes immediately readable and rated without requiring a manual refresh.

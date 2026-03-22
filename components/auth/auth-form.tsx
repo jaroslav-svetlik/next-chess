@@ -26,6 +26,14 @@ type RegisterPayload = {
   username: string;
 };
 
+function getCurrentOriginLabel() {
+  if (typeof window === "undefined") {
+    return "this site";
+  }
+
+  return window.location.origin;
+}
+
 export function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +46,10 @@ export function AuthForm({ mode }: AuthFormProps) {
 
   function mapAuthError(message: string | undefined, email: string, username?: string) {
     const normalized = message?.toLowerCase() ?? "";
+
+    if (normalized.includes("invalid origin") || normalized.includes("invalid_origin")) {
+      return `This auth request came from ${getCurrentOriginLabel()}, but the auth server does not trust that origin yet. Open NextChess directly on its main domain and try again. If this domain or port is intentional, add it to BETTER_AUTH_TRUSTED_ORIGINS on the server.`;
+    }
 
     if (
       normalized.includes("username") ||

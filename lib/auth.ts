@@ -5,10 +5,52 @@ import { betterAuth } from "better-auth";
 import { db } from "@/lib/db";
 import { MIN_STRONG_PASSWORD_LENGTH, validateStrongPassword } from "@/lib/password";
 
+const DEFAULT_AUTH_TRUSTED_ORIGINS = [
+  "http://127.0.0.1:3000",
+  "http://localhost:3000",
+  "https://nextchess.org",
+  "https://www.nextchess.org"
+];
+
+function normalizeOrigin(value: string | undefined | null) {
+  const raw = value?.trim();
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    return new URL(raw).origin;
+  } catch {
+    return null;
+  }
+}
+
+function getAuthTrustedOrigins() {
+  const configuredOrigins = (process.env.BETTER_AUTH_TRUSTED_ORIGINS ?? "")
+    .split(",")
+    .map((value) => normalizeOrigin(value))
+    .filter((value): value is string => Boolean(value));
+
+  return Array.from(
+    new Set(
+      [
+        ...DEFAULT_AUTH_TRUSTED_ORIGINS,
+        process.env.BETTER_AUTH_URL,
+        process.env.NEXT_PUBLIC_APP_URL,
+        process.env.APP_URL,
+        ...configuredOrigins
+      ]
+        .map((value) => normalizeOrigin(value))
+        .filter((value): value is string => Boolean(value))
+    )
+  );
+}
+
 export const auth = betterAuth({
   database: prismaAdapter(db, {
     provider: "postgresql"
   }),
+  trustedOrigins: getAuthTrustedOrigins(),
   emailAndPassword: {
     enabled: true,
     minPasswordLength: MIN_STRONG_PASSWORD_LENGTH

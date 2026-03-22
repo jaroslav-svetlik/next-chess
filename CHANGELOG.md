@@ -8,6 +8,20 @@ Version source of truth:
 
 The project is still in `0.x`, so versions represent active alpha milestones and can change quickly.
 
+## [0.6.18] - 2026-03-22
+
+Production auth hotfix focused on making registration failures around origin validation understandable and easier to configure correctly.
+
+### Fixed
+
+- updated [components/auth/auth-form.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/auth/auth-form.tsx) so a Better Auth `Invalid origin` failure no longer surfaces as a vague raw backend string; the register form now tells the operator exactly what is wrong and points to the missing `BETTER_AUTH_TRUSTED_ORIGINS` server configuration
+- updated [lib/auth.ts](/Users/jaroslavsvetlik/Documents/NextJS/chess/lib/auth.ts) so Better Auth now trusts the main production domains plus common local development origins by default, and can extend that allowlist through `BETTER_AUTH_TRUSTED_ORIGINS`
+
+### Changed
+
+- updated [.env.example](/Users/jaroslavsvetlik/Documents/NextJS/chess/.env.example) and [README.md](/Users/jaroslavsvetlik/Documents/NextJS/chess/README.md) to document `BETTER_AUTH_TRUSTED_ORIGINS` as a first-class auth/runtime variable
+- bumped the runtime version in [package.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package.json) to `0.6.18`, updated the root package version in [package-lock.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package-lock.json), and refreshed the reported version in [README.md](/Users/jaroslavsvetlik/Documents/NextJS/chess/README.md)
+
 ## [0.6.17] - 2026-03-22
 
 Rating-system release focused on moving registered rated play from a flat Elo ladder to a lichess-like provisional flow with stronger early swings and calmer stable updates.

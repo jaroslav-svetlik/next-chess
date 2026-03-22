@@ -5,7 +5,8 @@ import { logError, logInfo, logWarn } from "./observability.ts";
 
 export const BACKGROUND_JOB_TYPES = {
   gameDeadline: "game_deadline",
-  engineReview: "engine_review"
+  engineReview: "engine_review",
+  waitingRoomExpiry: "waiting_room_expiry"
 } as const;
 
 export type BackgroundJobType =
@@ -226,4 +227,8 @@ export function getGameDeadlineJobKey(gameId: string) {
 
 export function getEngineReviewJobKey(gameId: string) {
   return `engine-review:${gameId}`;
+}
+
+export function getWaitingRoomJobKey(gameId: string) {
+  return `waiting-room:${gameId}`;
 }

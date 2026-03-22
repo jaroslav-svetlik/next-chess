@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { LiveBoard } from "@/components/game/live-board";
 import { buildDemoHeaders, buildDemoUrl, loadStoredDemoIdentity } from "@/lib/dev-auth";
+import { WAITING_ROOM_HEARTBEAT_MS } from "@/lib/game-timing";
 import { useGameSoundEffects } from "@/lib/use-game-sound-effects";
 import { useRealtimeChannel } from "@/lib/use-realtime-channel";
 
@@ -327,16 +328,36 @@ export function GameRoomShell({ gameId }: GameRoomShellProps) {
     return player?.color ?? null;
   }
 
+  function getHostSeat(snapshot: GameDetail | null) {
+    if (!snapshot) {
+      return null;
+    }
+
+    return (
+      snapshot.players.find((entry) =>
+        snapshot.poolType === "user"
+          ? entry.userId === snapshot.hostId
+          : entry.guestIdentityId === snapshot.hostId
+      ) ??
+      snapshot.players.find((entry) => entry.color === "WHITE") ??
+      snapshot.players[0] ??
+      null
+    );
+  }
+
   function getCanJoin(snapshot: GameDetail | null) {
     if (!snapshot || !actor) {
       return false;
     }
 
+    const hostSeat = getHostSeat(snapshot);
+
     return (
       snapshot.status === "WAITING" &&
       snapshot.players.length < 2 &&
       snapshot.poolType === actor.actorType &&
-      snapshot.hostId !== actor.id
+      snapshot.hostId !== actor.id &&
+      Boolean(hostSeat?.isConnected)
     );
   }
 
@@ -581,6 +602,9 @@ export function GameRoomShell({ gameId }: GameRoomShellProps) {
     }
 
     void sendPresence(true, "room_visible");
+    const heartbeatInterval = window.setInterval(() => {
+      void sendPresence(true, "heartbeat");
+    }, WAITING_ROOM_HEARTBEAT_MS);
 
     function handlePageHide() {
       void sendPresence(false, "pagehide");
@@ -589,6 +613,7 @@ export function GameRoomShell({ gameId }: GameRoomShellProps) {
     window.addEventListener("pagehide", handlePageHide);
 
     return () => {
+      window.clearInterval(heartbeatInterval);
       window.removeEventListener("pagehide", handlePageHide);
       void sendPresence(false, "room_cleanup");
     };
@@ -738,6 +763,7 @@ export function GameRoomShell({ gameId }: GameRoomShellProps) {
 
   if (game.status === "WAITING") {
     const isSeated = !!getCurrentPlayerColor(game);
+    const hostSeat = getHostSeat(game);
 
     return (
       <section className="glass-panel matchmaking-shell">
@@ -767,6 +793,10 @@ export function GameRoomShell({ gameId }: GameRoomShellProps) {
           <div className="notice">
             Server queue is active. Once paired, white gets 10 seconds for the first move, then
             black gets 10 seconds for the first reply.
+          </div>
+        ) : hostSeat?.isConnected === false ? (
+          <div className="notice">
+            The host is no longer in this room. This open seek will disappear unless they reconnect.
           </div>
         ) : null}
         {getCanJoin(game) ? (

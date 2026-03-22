@@ -52,7 +52,7 @@ export async function POST(request: Request) {
           message === "ACCOUNT_RESTRICTED"
             ? "This account is restricted from entering matchmaking."
             : message === "MATCHMAKING_ALREADY_QUEUED"
-              ? "You already have a different public matchmaking queue open. Cancel it first or return to that room."
+              ? "You already have another live game or open seek. Cancel it first or return to that room."
             : "Matchmaking request failed."
       },
       {

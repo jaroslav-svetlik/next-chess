@@ -36,13 +36,20 @@ export async function POST(request: Request) {
     console.error("Failed to create game", error);
 
     const message = error instanceof Error ? error.message : "";
-    const status = message === "ACCOUNT_RESTRICTED" ? 403 : 500;
+    const status =
+      message === "ACCOUNT_RESTRICTED"
+        ? 403
+        : message === "LIVE_GAME_ALREADY_OPEN"
+          ? 409
+          : 500;
 
     return Response.json(
       {
         error:
           message === "ACCOUNT_RESTRICTED"
             ? "This account is restricted from creating games."
+            : message === "LIVE_GAME_ALREADY_OPEN"
+              ? "You already have another live table open. Return to it or cancel it before creating a new one."
             : "Game creation failed."
       },
       {

@@ -9,6 +9,7 @@ import {
   type BackgroundJobRecord
 } from "./lib/background-jobs.ts";
 import { runEngineReview } from "./lib/engine-analysis.ts";
+import { runWaitingRoomExpiryJob } from "./lib/games.ts";
 import { runGameDeadlineJob } from "./lib/game-deadline.ts";
 import { logError, logInfo } from "./lib/observability.ts";
 
@@ -54,6 +55,18 @@ async function executeJob(job: BackgroundJobRecord) {
 
   if (job.type === BACKGROUND_JOB_TYPES.engineReview) {
     await runEngineReview(payload.gameId);
+    await markBackgroundJobCompleted(job.id);
+    return;
+  }
+
+  if (job.type === BACKGROUND_JOB_TYPES.waitingRoomExpiry) {
+    const outcome = await runWaitingRoomExpiryJob(payload.gameId);
+
+    if (outcome.status === "reschedule") {
+      await rescheduleRunningJob(job.id, outcome.runAt, outcome.reason);
+      return;
+    }
+
     await markBackgroundJobCompleted(job.id);
     return;
   }

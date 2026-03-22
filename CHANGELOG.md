@@ -8,6 +8,21 @@ Version source of truth:
 
 The project is still in `0.x`, so versions represent active alpha milestones and can change quickly.
 
+## [0.6.9] - 2026-03-22
+
+Patch release focused on making live lobby seeks ephemeral for both guest and registered users.
+
+### Fixed
+
+- updated [lib/games.ts](/Users/jaroslavsvetlik/Documents/NextJS/chess/lib/games.ts), [lib/game-presence.ts](/Users/jaroslavsvetlik/Documents/NextJS/chess/lib/game-presence.ts), [worker.ts](/Users/jaroslavsvetlik/Documents/NextJS/chess/worker.ts), [lib/background-jobs.ts](/Users/jaroslavsvetlik/Documents/NextJS/chess/lib/background-jobs.ts), and [lib/game-timing.ts](/Users/jaroslavsvetlik/Documents/NextJS/chess/lib/game-timing.ts) so waiting public tables now behave like ephemeral seeks: host presence is tracked server-side, stale hosts are removed from the lobby immediately, and disconnected waiting rooms are auto-cancelled after a short grace period instead of lingering as dead tables
+- updated [components/game/game-room-shell.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/game/game-room-shell.tsx) so waiting rooms send periodic presence heartbeats and show a clearer stale-host state while the backend is cleaning up an abandoned seek
+- updated [app/api/games/route.ts](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/api/games/route.ts) and [app/api/matchmaking/quick-pair/route.ts](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/api/matchmaking/quick-pair/route.ts) so one actor can no longer accumulate multiple live open tables or queues at the same time; existing live rooms are reused and conflicting requests are rejected cleanly
+- updated [prisma/schema.prisma](/Users/jaroslavsvetlik/Documents/NextJS/chess/prisma/schema.prisma) and added [scripts/sql/add_waiting_room_presence.sql](/Users/jaroslavsvetlik/Documents/NextJS/chess/scripts/sql/add_waiting_room_presence.sql) so player presence now persists `lastSeenAt`, giving the worker an authoritative signal for waiting-room expiry
+
+### Changed
+
+- bumped the runtime version in [package.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package.json) to `0.6.9`, updated the root package version in [package-lock.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package-lock.json), and refreshed the reported version in [README.md](/Users/jaroslavsvetlik/Documents/NextJS/chess/README.md)
+
 ## [0.6.8] - 2026-03-21
 
 Production cache and realtime hotfix focused on preventing stale page shells and noisy websocket failures.

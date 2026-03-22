@@ -134,6 +134,7 @@ model GamePlayer {
   color           PlayerColor
   timeRemainingMs Int
   isConnected     Boolean     @default(false)
+  lastSeenAt      DateTime    @default(now())
   joinedAt        DateTime    @default(now())
   game            Game        @relation(fields: [gameId], references: [id], onDelete: Cascade)
   user            User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -145,6 +146,7 @@ model GamePlayer {
   @@index([userId, joinedAt], map: "game_player_user_joined_idx")
   @@index([guestIdentityId, joinedAt], map: "game_player_guest_joined_idx")
   @@index([gameId, joinedAt], map: "game_player_game_joined_idx")
+  @@index([gameId, isConnected, lastSeenAt], map: "game_player_presence_idx")
 }
 
 model Move {

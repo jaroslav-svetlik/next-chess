@@ -6,6 +6,12 @@ import {
   type MoveTelemetryInput
 } from "@/lib/anti-cheat";
 import {
+  BACKGROUND_JOB_TYPES,
+  cancelBackgroundJob,
+  getWaitingRoomJobKey,
+  scheduleBackgroundJob
+} from "@/lib/background-jobs";
+import {
   chessColorToPlayerColor,
   getCapturedPieces,
   getPositionFlags,
@@ -17,7 +23,11 @@ import { db } from "@/lib/db";
 import { scheduleEngineReview } from "@/lib/engine-analysis";
 import { formatCategoryLabel, formatControl, NormalizedGameSetup } from "@/lib/game-config";
 import { isGuestEmail } from "@/lib/guest-accounts";
-import { OPENING_WINDOW_MS } from "@/lib/game-timing";
+import {
+  OPENING_WINDOW_MS,
+  WAITING_ROOM_DISCONNECT_GRACE_MS,
+  WAITING_ROOM_HOST_GRACE_MS
+} from "@/lib/game-timing";
 import { maybeAutoRaiseObserveForGame } from "@/lib/moderation-policy";
 import { logInfo, logWarn } from "@/lib/observability";
 import { applyRatingAdjustment, getRatingField, getUserRatingByCategory } from "@/lib/rating";
@@ -48,6 +58,7 @@ const gamePlayerSelect = {
   color: true,
   timeRemainingMs: true,
   isConnected: true,
+  lastSeenAt: true,
   joinedAt: true,
   user: {
     select: participantUserSelect
@@ -174,6 +185,21 @@ export type GameDetailRecord = Prisma.GameGetPayload<{
 type GameTransactionRecord = Prisma.GameGetPayload<{
   select: typeof gameTransactionSelect;
 }>;
+
+type WaitingRoomJobResult =
+  | {
+      status: "noop";
+      reason: string;
+    }
+  | {
+      status: "reschedule";
+      runAt: Date;
+      reason: string;
+    }
+  | {
+      status: "completed";
+      reason: string;
+    };
 
 export type SubmitMoveInput = {
   from: string;
@@ -378,6 +404,122 @@ function gameHasGuestPlayers(
   );
 }
 
+function getWaitingHostPlayer(
+  game: {
+    createdByUserId?: string | null;
+    createdByGuestId?: string | null;
+    players: Array<{
+      userId?: string | null;
+      guestIdentityId?: string | null;
+      color: PlayerColor;
+      isConnected?: boolean;
+      lastSeenAt?: Date;
+    }>;
+  }
+) {
+  return (
+    game.players.find((player) =>
+      game.createdByUserId
+        ? player.userId === game.createdByUserId
+        : game.createdByGuestId
+          ? player.guestIdentityId === game.createdByGuestId
+          : false
+    ) ??
+    game.players.find((player) => player.color === PlayerColor.WHITE) ??
+    game.players[0] ??
+    null
+  );
+}
+
+function getWaitingRoomExpiryRunAt(
+  game: {
+    status: GameStatus;
+    createdByUserId?: string | null;
+    createdByGuestId?: string | null;
+    players: Array<{
+      userId?: string | null;
+      guestIdentityId?: string | null;
+      color: PlayerColor;
+      isConnected: boolean;
+      lastSeenAt: Date;
+    }>;
+  },
+  referenceTime = Date.now()
+) {
+  if (game.status !== GameStatus.WAITING) {
+    return null;
+  }
+
+  const host = getWaitingHostPlayer(game);
+  if (!host) {
+    return new Date(referenceTime);
+  }
+
+  const graceMs = host.isConnected
+    ? WAITING_ROOM_HOST_GRACE_MS
+    : WAITING_ROOM_DISCONNECT_GRACE_MS;
+
+  return new Date(Math.max(referenceTime, (host.lastSeenAt ?? new Date(0)).getTime() + graceMs));
+}
+
+function isWaitingHostAvailable(
+  game: {
+    status: GameStatus;
+    createdByUserId?: string | null;
+    createdByGuestId?: string | null;
+    players: Array<{
+      userId?: string | null;
+      guestIdentityId?: string | null;
+      color: PlayerColor;
+      isConnected: boolean;
+      lastSeenAt: Date;
+    }>;
+  },
+  referenceTime = Date.now()
+) {
+  if (game.status !== GameStatus.WAITING) {
+    return true;
+  }
+
+  const host = getWaitingHostPlayer(game);
+  if (!host || !host.isConnected) {
+    return false;
+  }
+
+  return referenceTime - (host.lastSeenAt ?? new Date(0)).getTime() <= WAITING_ROOM_HOST_GRACE_MS;
+}
+
+function shouldExpireWaitingRoom(
+  game: {
+    status: GameStatus;
+    createdByUserId?: string | null;
+    createdByGuestId?: string | null;
+    players: Array<{
+      userId?: string | null;
+      guestIdentityId?: string | null;
+      color: PlayerColor;
+      isConnected: boolean;
+      lastSeenAt: Date;
+    }>;
+  },
+  referenceTime = Date.now()
+) {
+  if (game.status !== GameStatus.WAITING) {
+    return false;
+  }
+
+  const host = getWaitingHostPlayer(game);
+  if (!host) {
+    return true;
+  }
+
+  const graceMs = host.isConnected
+    ? WAITING_ROOM_HOST_GRACE_MS
+    : WAITING_ROOM_DISCONNECT_GRACE_MS;
+
+  return referenceTime - (host.lastSeenAt ?? new Date(0)).getTime() >= graceMs;
+}
+
 async function fetchGameDetailRecord(gameId: string) {
   return db.game.findUnique({
     where: {
@@ -385,6 +527,77 @@ async function fetchGameDetailRecord(gameId: string) {
     },
     select: gameDetailSelect
   });
+}
+
+async function findExistingActiveGameForActor(
+  tx: Prisma.TransactionClient,
+  actor: RequestActor
+) {
+  return tx.game.findFirst({
+    where: {
+      status: GameStatus.ACTIVE,
+      players: {
+        some: getActorRelationInput(actor)
+      }
+    },
+    select: gameDetailSelect,
+    orderBy: {
+      createdAt: "desc"
+    }
+  });
+}
+
+async function findExistingWaitingGameForActor(
+  tx: Prisma.TransactionClient,
+  actor: RequestActor
+) {
+  return tx.game.findFirst({
+    where: {
+      status: GameStatus.WAITING,
+      players: {
+        some: getActorRelationInput(actor)
+      }
+    },
+    select: gameDetailSelect,
+    orderBy: {
+      createdAt: "desc"
+    }
+  });
+}
+
+async function scheduleWaitingRoomExpiry(game: {
+  id: string;
+  status: GameStatus;
+  createdByUserId?: string | null;
+  createdByGuestId?: string | null;
+  players: Array<{
+    userId?: string | null;
+    guestIdentityId?: string | null;
+    color: PlayerColor;
+    isConnected: boolean;
+    lastSeenAt: Date;
+  }>;
+}) {
+  const runAt = getWaitingRoomExpiryRunAt(game);
+
+  if (!runAt) {
+    await cancelBackgroundJob(getWaitingRoomJobKey(game.id));
+    return null;
+  }
+
+  return scheduleBackgroundJob({
+    type: BACKGROUND_JOB_TYPES.waitingRoomExpiry,
+    key: getWaitingRoomJobKey(game.id),
+    runAt,
+    payload: {
+      gameId: game.id
+    },
+    maxAttempts: 20
+  });
+}
+
+async function cancelWaitingRoomExpiry(gameId: string) {
+  return cancelBackgroundJob(getWaitingRoomJobKey(gameId));
 }
 
 export function serializeLobbyGame(
@@ -407,6 +620,7 @@ export function serializeLobbyGame(
     canJoin:
       game.status === GameStatus.WAITING &&
       game.players.length < 2 &&
+      isWaitingHostAvailable(game) &&
       actorMatchesGamePool(game, actor) &&
       (!actor || !actorMatchesCreator(game, actor)) &&
       (!game.rated || canActorEnterRated(actor)) &&
@@ -476,7 +690,9 @@ export async function listLobbyRealtimeGames() {
     take: 24
   });
 
-  return games.map(serializeLobbyGameSnapshot);
+  return games
+    .filter((game) => isWaitingHostAvailable(game))
+    .map(serializeLobbyGameSnapshot);
 }
 
 export function serializeGameDetail(
@@ -495,7 +711,8 @@ export function serializeGameDetail(
       game.players.length < 2 &&
       !!currentActor &&
       actorMatchesGamePool(game, currentActor) &&
-      !actorMatchesCreator(game, currentActor),
+      !actorMatchesCreator(game, currentActor) &&
+      isWaitingHostAvailable(game),
     isHost: currentActor ? actorMatchesCreator(game, currentActor) : false
   };
 }
@@ -612,6 +829,7 @@ export async function listOpenGames(
   });
 
   return games
+    .filter((game) => isWaitingHostAvailable(game))
     .filter((game) => (actor ? actorMatchesGamePool(game, actor) : true))
     .filter((game) => !game.rated || canActorEnterRated(actor))
     .map((game) => serializeLobbyGame(game, actor));
@@ -689,7 +907,8 @@ async function createWaitingGame(
           ...getActorRelationInput(actor),
           color: PlayerColor.WHITE,
           timeRemainingMs: setup.initialTimeMs,
-          isConnected: true
+          isConnected: true,
+          lastSeenAt: new Date()
         }
       },
       events: {
@@ -711,14 +930,66 @@ export async function createGame(actor: RequestActor, setup: NormalizedGameSetup
   assertActorCanPlay(actor);
 
   const game = await db.$transaction(async (tx) => {
+    const existingActiveGame = await findExistingActiveGameForActor(tx, actor);
+    if (existingActiveGame) {
+      logInfo("games.reused_active_game", {
+        gameId: existingActiveGame.id,
+        actorId: actor.id,
+        actorType: actor.actorType
+      });
+      return existingActiveGame;
+    }
+
+    const existingWaitingGame = await findExistingWaitingGameForActor(tx, actor);
+    if (existingWaitingGame) {
+      const sameSetup =
+        !existingWaitingGame.rated &&
+        existingWaitingGame.visibility === setup.visibility &&
+        existingWaitingGame.timeCategory === setup.timeCategory &&
+        existingWaitingGame.initialTimeMs === setup.initialTimeMs &&
+        existingWaitingGame.incrementMs === setup.incrementMs;
+
+      if (sameSetup) {
+        logInfo("games.reused_waiting_game", {
+          gameId: existingWaitingGame.id,
+          actorId: actor.id,
+          actorType: actor.actorType,
+          visibility: existingWaitingGame.visibility,
+          control: formatControl(existingWaitingGame.initialTimeMs, existingWaitingGame.incrementMs)
+        });
+        return existingWaitingGame;
+      }
+
+      logWarn("games.waiting_conflict", {
+        gameId: existingWaitingGame.id,
+        actorId: actor.id,
+        actorType: actor.actorType,
+        existingVisibility: existingWaitingGame.visibility,
+        existingControl: formatControl(
+          existingWaitingGame.initialTimeMs,
+          existingWaitingGame.incrementMs
+        ),
+        requestedVisibility: setup.visibility,
+        requestedControl: formatControl(setup.initialTimeMs, setup.incrementMs)
+      });
+      throw new Error("LIVE_GAME_ALREADY_OPEN");
+    }
+
     const created = await createWaitingGame(tx, actor, setup, {
       rated: false
     });
 
     return created;
   });
-
   const serialized = serializeGameDetail(game, actor);
+
+  if (game.status === GameStatus.ACTIVE) {
+    await cancelWaitingRoomExpiry(game.id);
+    void publishGameSnapshot(game, "game_reused");
+    return serialized;
+  }
+
+  await scheduleWaitingRoomExpiry(game);
   void publishLobbyUpsert(game, "game_created");
   void publishGameSnapshot(game, "game_created");
   logInfo("games.created", {
@@ -743,68 +1014,56 @@ export async function quickPairGame(actor: RequestActor, setup: NormalizedGameSe
 
   const game = await db.$transaction(
     async (tx) => {
-      const existingPublicGame = await tx.game.findFirst({
-        where: {
-          status: {
-            in: [GameStatus.WAITING, GameStatus.ACTIVE]
-          },
-          visibility: GameVisibility.PUBLIC,
-          players: {
-            some: getActorRelationInput(actor)
-          }
-        },
-        select: gameDetailSelect,
-        orderBy: {
-          createdAt: "desc"
-        }
-      });
-
-      if (existingPublicGame?.status === GameStatus.ACTIVE) {
+      const existingActiveGame = await findExistingActiveGameForActor(tx, actor);
+      if (existingActiveGame) {
         logInfo("matchmaking.reused_active_game", {
-          gameId: existingPublicGame.id,
+          gameId: existingActiveGame.id,
           actorId: actor.id,
           actorType: actor.actorType
         });
-        return existingPublicGame;
+        return existingActiveGame;
       }
 
-      if (existingPublicGame) {
+      const existingWaitingGame = await findExistingWaitingGameForActor(tx, actor);
+      if (existingWaitingGame) {
         const sameQueueConfig =
-          existingPublicGame.rated === rated &&
-          existingPublicGame.timeCategory === publicSetup.timeCategory &&
-          existingPublicGame.initialTimeMs === publicSetup.initialTimeMs &&
-          existingPublicGame.incrementMs === publicSetup.incrementMs;
+          existingWaitingGame.visibility === GameVisibility.PUBLIC &&
+          existingWaitingGame.rated === rated &&
+          existingWaitingGame.timeCategory === publicSetup.timeCategory &&
+          existingWaitingGame.initialTimeMs === publicSetup.initialTimeMs &&
+          existingWaitingGame.incrementMs === publicSetup.incrementMs;
 
         if (sameQueueConfig) {
           logInfo("matchmaking.reused_waiting_queue", {
-            gameId: existingPublicGame.id,
+            gameId: existingWaitingGame.id,
             actorId: actor.id,
             actorType: actor.actorType,
             rated,
             control: formatControl(publicSetup.initialTimeMs, publicSetup.incrementMs)
           });
-          return existingPublicGame;
+          return existingWaitingGame;
         }
 
         logWarn("matchmaking.queue_conflict", {
-          gameId: existingPublicGame.id,
+          gameId: existingWaitingGame.id,
           actorId: actor.id,
           actorType: actor.actorType,
           existingControl: formatControl(
-            existingPublicGame.initialTimeMs,
-            existingPublicGame.incrementMs
+            existingWaitingGame.initialTimeMs,
+            existingWaitingGame.incrementMs
           ),
           requestedControl: formatControl(
             publicSetup.initialTimeMs,
             publicSetup.incrementMs
           ),
-          existingRated: existingPublicGame.rated,
+          existingRated: existingWaitingGame.rated,
+          existingVisibility: existingWaitingGame.visibility,
           requestedRated: rated
         });
         throw new Error("MATCHMAKING_ALREADY_QUEUED");
       }
 
-      const waitingGame = await tx.game.findFirst({
+      const waitingGames = await tx.game.findMany({
         where: {
           AND: [
             {
@@ -852,8 +1111,10 @@ export async function quickPairGame(actor: RequestActor, setup: NormalizedGameSe
         select: gameDetailSelect,
         orderBy: {
           createdAt: "asc"
-        }
+        },
+        take: 12
       });
+      const waitingGame = waitingGames.find((entry) => isWaitingHostAvailable(entry)) ?? null;
 
       if (!waitingGame) {
         return createWaitingGame(tx, actor, publicSetup, {
@@ -874,7 +1135,8 @@ export async function quickPairGame(actor: RequestActor, setup: NormalizedGameSe
               ...getActorRelationInput(actor),
               color: PlayerColor.BLACK,
               timeRemainingMs: waitingGame.initialTimeMs,
-              isConnected: true
+              isConnected: true,
+              lastSeenAt: new Date()
             }
           },
           events: {
@@ -911,6 +1173,7 @@ export async function quickPairGame(actor: RequestActor, setup: NormalizedGameSe
   const serialized = serializeGameDetail(game, actor);
 
   if (game.turnStartedAt) {
+    await cancelWaitingRoomExpiry(game.id);
     const queueWaitMs = Math.max(0, Date.now() - game.createdAt.getTime());
     await syncGameDeadlineJob(game);
     void publishLobbyRemove(serialized.id, "game_joined");
@@ -924,6 +1187,7 @@ export async function quickPairGame(actor: RequestActor, setup: NormalizedGameSe
       queueWaitMs
     });
   } else {
+    await scheduleWaitingRoomExpiry(game);
     void publishLobbyUpsert(game, "game_created");
     void publishGameSnapshot(game, "game_created");
     logInfo("matchmaking.queued", {
@@ -956,6 +1220,90 @@ export async function getGame(
   }
 
   return serializeGameDetail(game, currentActor);
+}
+
+export async function runWaitingRoomExpiryJob(gameId: string): Promise<WaitingRoomJobResult> {
+  let expiredGame: GameDetailRecord | null = null;
+
+  const outcome = await db.$transaction(
+    async (tx) => {
+      const existing = await tx.game.findUnique({
+        where: {
+          id: gameId
+        },
+        select: gameDetailSelect
+      });
+
+      if (!existing) {
+        return {
+          status: "noop" as const,
+          reason: "game_missing"
+        };
+      }
+
+      if (existing.status !== GameStatus.WAITING) {
+        return {
+          status: "noop" as const,
+          reason: "game_not_waiting"
+        };
+      }
+
+      const nextRunAt = getWaitingRoomExpiryRunAt(existing);
+      if (nextRunAt && !shouldExpireWaitingRoom(existing)) {
+        return {
+          status: "reschedule" as const,
+          runAt: nextRunAt,
+          reason: "host_still_present"
+        };
+      }
+
+      const host = getWaitingHostPlayer(existing);
+      expiredGame = await tx.game.update({
+        where: {
+          id: gameId
+        },
+        data: {
+          status: GameStatus.CANCELLED,
+          result: "cancelled_host_left",
+          endedAt: new Date(),
+          turnStartedAt: null,
+          events: {
+            create: {
+              type: "waiting_room_expired",
+              payload: {
+                source: "waiting_room_expiry_job",
+                hostConnected: host?.isConnected ?? false,
+                hostLastSeenAt: host?.lastSeenAt?.toISOString() ?? null
+              }
+            }
+          }
+        },
+        select: gameDetailSelect
+      });
+
+      return {
+        status: "completed" as const,
+        reason: host?.isConnected ? "host_heartbeat_expired" : "host_disconnected"
+      };
+    },
+    {
+      isolationLevel: Prisma.TransactionIsolationLevel.Serializable
+    }
+  );
+
+  const finalizedGame = expiredGame as GameDetailRecord | null;
+  if (!finalizedGame) {
+    return outcome;
+  }
+
+  void publishGameSnapshot(finalizedGame, "waiting_room_expired");
+  void publishLobbyRemove(finalizedGame.id, "waiting_room_expired");
+  logInfo("games.waiting_room_expired", {
+    gameId: finalizedGame.id,
+    reason: outcome.reason
+  });
+
+  return outcome;
 }
 
 export async function cancelWaitingGame(gameId: string, actor: RequestActor) {
@@ -1007,6 +1355,7 @@ export async function cancelWaitingGame(gameId: string, actor: RequestActor) {
     }
   );
 
+  await cancelWaitingRoomExpiry(gameId);
   await cancelGameDeadlineJob(gameId);
 
   const serialized = serializeGameDetail(game, actor);
@@ -1046,6 +1395,10 @@ export async function joinGame(gameId: string, actor: RequestActor) {
         throw new Error("GAME_UNAVAILABLE");
       }
 
+      if (!isWaitingHostAvailable(existing)) {
+        throw new Error("GAME_UNAVAILABLE");
+      }
+
       if (existing.rated && actor.isDemo) {
         throw new Error("RATED_REQUIRES_ACCOUNT");
       }
@@ -1075,7 +1428,8 @@ export async function joinGame(gameId: string, actor: RequestActor) {
               ...getActorRelationInput(actor),
               color: PlayerColor.BLACK,
               timeRemainingMs: existing.initialTimeMs,
-              isConnected: true
+              isConnected: true,
+              lastSeenAt: new Date()
             }
           },
           events: {
@@ -1111,6 +1465,7 @@ export async function joinGame(gameId: string, actor: RequestActor) {
 
   const serialized = serializeGameDetail(game, actor);
   if (game.turnStartedAt) {
+    await cancelWaitingRoomExpiry(game.id);
     await syncGameDeadlineJob(game);
   }
   void publishLobbyRemove(serialized.id, "game_joined");

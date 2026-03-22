@@ -6,7 +6,7 @@ This repository is the public alpha codebase behind the project. The goal is not
 
 - Repository: [jaroslav-svetlik/next-chess](https://github.com/jaroslav-svetlik/next-chess)
 - Live site: [nextchess.org](https://nextchess.org)
-- Current version: `0.6.8`
+- Current version: `0.6.9`
 - Changelog: [CHANGELOG.md](./CHANGELOG.md)
 - Platform plan: [docs/chess-platform-plan.md](./docs/chess-platform-plan.md)
 - Release process: [docs/release-process.md](./docs/release-process.md)

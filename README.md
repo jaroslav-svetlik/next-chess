@@ -1,4 +1,6 @@
-![NextChess Logo](public/branding/nextchess-logo.png)
+<p align="center">
+  <img src="public/branding/nextchess-logo.png" alt="NextChess Logo" width="260" />
+</p>
 
 # NextChess
 

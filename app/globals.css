@@ -794,6 +794,11 @@ select {
   padding: 2rem 0 4rem;
 }
 
+.home-page {
+  display: grid;
+  gap: 1rem;
+}
+
 .home-page.content-wrap {
   width: min(1320px, calc(100% - 2rem));
 }
@@ -1316,6 +1321,154 @@ select {
 
 .home-chat-feedback.error {
   color: #ffbeb8;
+}
+
+.site-footer-stack {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.4fr);
+  gap: 1rem;
+  overflow: hidden;
+  padding: 1.15rem;
+}
+
+.site-footer-stack::before {
+  content: "";
+  position: absolute;
+  inset: auto auto -5rem -3rem;
+  width: 18rem;
+  height: 18rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(87, 230, 255, 0.18), transparent 68%);
+  pointer-events: none;
+}
+
+.site-footer-stack::after {
+  content: "";
+  position: absolute;
+  inset: -6rem -5rem auto auto;
+  width: 20rem;
+  height: 20rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(61, 125, 255, 0.16), transparent 72%);
+  pointer-events: none;
+}
+
+.site-footer-copy,
+.site-tech-grid {
+  position: relative;
+  z-index: 1;
+}
+
+.site-footer-copy {
+  display: grid;
+  align-content: start;
+  gap: 0.55rem;
+  padding: 0.3rem;
+}
+
+.site-footer-title {
+  margin: 0;
+  font-family: var(--font-display), serif;
+  font-size: clamp(1.85rem, 2.8vw, 2.8rem);
+  line-height: 0.98;
+  max-width: 13ch;
+}
+
+.site-footer-text {
+  margin: 0;
+  max-width: 48ch;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.site-tech-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.site-tech-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.02)),
+    rgba(7, 16, 28, 0.88);
+  padding: 0.85rem 0.95rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 16px 34px rgba(0, 0, 0, 0.18);
+}
+
+.site-tech-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.site-tech-logo svg {
+  width: 2rem;
+  height: 2rem;
+}
+
+.site-tech-logo.next {
+  color: #f5fdff;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
+}
+
+.site-tech-logo.react {
+  color: #61dafb;
+  background: linear-gradient(135deg, rgba(97, 218, 251, 0.15), rgba(79, 172, 254, 0.08));
+}
+
+.site-tech-logo.typescript {
+  color: #3178c6;
+  background: linear-gradient(135deg, rgba(49, 120, 198, 0.18), rgba(49, 120, 198, 0.08));
+}
+
+.site-tech-logo.tailwind {
+  color: #38bdf8;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.18), rgba(34, 211, 238, 0.08));
+}
+
+.site-tech-logo.prisma {
+  color: #cfe5ff;
+  background: linear-gradient(135deg, rgba(165, 195, 255, 0.16), rgba(89, 124, 255, 0.08));
+}
+
+.site-tech-logo.postgres {
+  color: #7bb8ff;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.16), rgba(96, 165, 250, 0.08));
+}
+
+.site-tech-logo.auth {
+  color: #90f0d5;
+  background: linear-gradient(135deg, rgba(51, 160, 140, 0.18), rgba(144, 240, 213, 0.08));
+}
+
+.site-tech-meta {
+  display: grid;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.site-tech-meta strong {
+  font-size: 1rem;
+}
+
+.site-tech-meta span {
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.35;
 }
 
 .home-lobby {
@@ -3117,8 +3270,14 @@ select {
   }
 
   .home-mode-chip,
-  .home-correspondence-card {
+  .home-correspondence-card,
+  .site-footer-stack {
     min-width: 100%;
+  }
+
+  .site-footer-stack,
+  .site-tech-grid {
+    grid-template-columns: 1fr;
   }
 
   .stats-strip {
@@ -3201,6 +3360,10 @@ select {
     padding: 0.9rem;
   }
 
+  .site-footer-stack {
+    padding: 0.95rem;
+  }
+
   .home-chat-shell {
     padding: 0.9rem;
   }
@@ -3233,6 +3396,11 @@ select {
 
   .home-preset-card {
     min-height: 7.2rem;
+  }
+
+  .site-tech-card {
+    grid-template-columns: 1fr;
+    justify-items: start;
   }
 
   .home-lobby-head {

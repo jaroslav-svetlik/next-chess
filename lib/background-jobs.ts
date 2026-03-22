@@ -46,7 +46,9 @@ export async function scheduleBackgroundJob(input: ScheduleBackgroundJobInput) {
       "status",
       "payload",
       "runAt",
-      "maxAttempts"
+      "maxAttempts",
+      "createdAt",
+      "updatedAt"
     )
     VALUES (
       ${jobId},
@@ -55,7 +57,9 @@ export async function scheduleBackgroundJob(input: ScheduleBackgroundJobInput) {
       'PENDING',
       ${input.payload ? JSON.stringify(input.payload) : null}::jsonb,
       ${input.runAt},
-      ${input.maxAttempts ?? 5}
+      ${input.maxAttempts ?? 5},
+      NOW(),
+      NOW()
     )
     ON CONFLICT ("key") DO UPDATE SET
       "type" = EXCLUDED."type",

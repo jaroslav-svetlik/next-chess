@@ -8,6 +8,18 @@ Version source of truth:
 
 The project is still in `0.x`, so versions represent active alpha milestones and can change quickly.
 
+## [0.6.12] - 2026-03-22
+
+Production hotfix focused on restoring lobby creation and quick pairing after the waiting-room lifecycle release.
+
+### Fixed
+
+- updated [lib/background-jobs.ts](/Users/jaroslavsvetlik/Documents/NextJS/chess/lib/background-jobs.ts) so raw `BackgroundJob` inserts now explicitly write `createdAt` and `updatedAt`, fixing the production `23502 null value in column "updatedAt"` failure that was breaking both `New lobby` and `Quick pairing` as soon as a waiting-room expiry job was scheduled
+
+### Changed
+
+- bumped the runtime version in [package.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package.json) to `0.6.12`, updated the root package version in [package-lock.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package-lock.json), and refreshed the reported version in [README.md](/Users/jaroslavsvetlik/Documents/NextJS/chess/README.md)
+
 ## [0.6.11] - 2026-03-22
 
 Patch release focused on strengthening the registration password flow and making the password UX more explicit.

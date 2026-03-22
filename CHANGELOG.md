@@ -8,6 +8,18 @@ Version source of truth:
 
 The project is still in `0.x`, so versions represent active alpha milestones and can change quickly.
 
+## [0.6.14] - 2026-03-22
+
+Production hotfix focused on stopping live-board selection resets during the opening move.
+
+### Fixed
+
+- updated [components/game/game-room-shell.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/game/game-room-shell.tsx) so `currentPlayerColor` and `legalMoves` stay stable across benign presence/realtime updates, and the room-presence heartbeat no longer tears down and recreates itself on every game snapshot; this prevents first-move piece selection from being instantly cleared as if the board were constantly refreshing underneath the player
+
+### Changed
+
+- bumped the runtime version in [package.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package.json) to `0.6.14`, updated the root package version in [package-lock.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package-lock.json), and refreshed the reported version in [README.md](/Users/jaroslavsvetlik/Documents/NextJS/chess/README.md)
+
 ## [0.6.13] - 2026-03-22
 
 Production hotfix focused on restoring move input for newly started live games.

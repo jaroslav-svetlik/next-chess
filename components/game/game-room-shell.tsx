@@ -1,7 +1,7 @@
 "use client";
 
 import { Chess } from "chess.js";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { LiveBoard } from "@/components/game/live-board";
@@ -278,6 +278,30 @@ export function GameRoomShell({ gameId }: GameRoomShellProps) {
   useEffect(() => {
     latestActorRef.current = actor;
   }, [actor]);
+
+  const currentPlayerColor = useMemo(() => {
+    return getCurrentPlayerColor(game);
+  }, [actor, game]);
+
+  const legalMoves = useMemo(() => {
+    if (
+      !game ||
+      game.status !== "ACTIVE" ||
+      !currentPlayerColor ||
+      currentPlayerColor !== game.turnColor
+    ) {
+      return [] as LegalMove[];
+    }
+
+    const chess = new Chess(game.fen);
+    return chess.moves({ verbose: true }).map((move) => ({
+      from: move.from,
+      to: move.to,
+      san: move.san,
+      lan: move.lan,
+      promotion: move.promotion as LegalMove["promotion"] | undefined
+    }));
+  }, [currentPlayerColor, game?.fen, game?.status, game?.turnColor]);
 
   async function sendPresence(connected: boolean, reason: string) {
     if (!actor || !game) {
@@ -629,7 +653,7 @@ export function GameRoomShell({ gameId }: GameRoomShellProps) {
   });
 
   useEffect(() => {
-    if (!actor || !game || !getCurrentPlayerColor(game)) {
+    if (!actor || !game || !currentPlayerColor) {
       return;
     }
 
@@ -649,7 +673,7 @@ export function GameRoomShell({ gameId }: GameRoomShellProps) {
       window.removeEventListener("pagehide", handlePageHide);
       void sendPresence(false, "room_cleanup");
     };
-  }, [actor, game, gameId]);
+  }, [actor, currentPlayerColor, game?.status, gameId]);
 
   useEffect(() => {
     function handlePageHide() {
@@ -858,8 +882,6 @@ export function GameRoomShell({ gameId }: GameRoomShellProps) {
 
   const whitePlayer = game.players.find((player) => player.color === "WHITE") ?? null;
   const blackPlayer = game.players.find((player) => player.color === "BLACK") ?? null;
-  const currentPlayerColor = getCurrentPlayerColor(game);
-  const legalMoves = getLegalMoves(game);
 
   return (
     <>

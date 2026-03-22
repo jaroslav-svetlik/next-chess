@@ -8,6 +8,18 @@ Version source of truth:
 
 The project is still in `0.x`, so versions represent active alpha milestones and can change quickly.
 
+## [0.6.10] - 2026-03-22
+
+Production hotfix focused on restoring the waiting-room worker after the `0.6.9` lifecycle release.
+
+### Fixed
+
+- updated [lib/games.ts](/Users/jaroslavsvetlik/Documents/NextJS/chess/lib/games.ts) to use worker-safe relative imports internally, so the production `npm run worker` runtime can load the waiting-room expiry path without failing on unresolved `@/lib/...` aliases
+
+### Changed
+
+- bumped the runtime version in [package.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package.json) to `0.6.10`, updated the root package version in [package-lock.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package-lock.json), and refreshed the reported version in [README.md](/Users/jaroslavsvetlik/Documents/NextJS/chess/README.md)
+
 ## [0.6.9] - 2026-03-22
 
 Patch release focused on making live lobby seeks ephemeral for both guest and registered users.

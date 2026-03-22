@@ -4,36 +4,36 @@ import { GameStatus, GameVisibility, ModerationStatus, PlayerColor, Prisma, Time
 import {
   normalizeMoveTelemetry,
   type MoveTelemetryInput
-} from "@/lib/anti-cheat";
+} from "./anti-cheat.ts";
 import {
   BACKGROUND_JOB_TYPES,
   cancelBackgroundJob,
   getWaitingRoomJobKey,
   scheduleBackgroundJob
-} from "@/lib/background-jobs";
+} from "./background-jobs.ts";
 import {
   chessColorToPlayerColor,
   getCapturedPieces,
   getPositionFlags,
   resolveOutcomeFromFen,
   serializeBoard
-} from "@/lib/chess-engine";
-import { cancelGameDeadlineJob, maybeEnforceExpiredGameDeadline, syncGameDeadlineJob } from "@/lib/game-deadline";
-import { db } from "@/lib/db";
-import { scheduleEngineReview } from "@/lib/engine-analysis";
-import { formatCategoryLabel, formatControl, NormalizedGameSetup } from "@/lib/game-config";
-import { isGuestEmail } from "@/lib/guest-accounts";
+} from "./chess-engine.ts";
+import { cancelGameDeadlineJob, maybeEnforceExpiredGameDeadline, syncGameDeadlineJob } from "./game-deadline.ts";
+import { db } from "./db.ts";
+import { scheduleEngineReview } from "./engine-analysis.ts";
+import { formatCategoryLabel, formatControl, NormalizedGameSetup } from "./game-config.ts";
+import { isGuestEmail } from "./guest-accounts.ts";
 import {
   OPENING_WINDOW_MS,
   WAITING_ROOM_DISCONNECT_GRACE_MS,
   WAITING_ROOM_HOST_GRACE_MS
-} from "@/lib/game-timing";
-import { maybeAutoRaiseObserveForGame } from "@/lib/moderation-policy";
-import { logInfo, logWarn } from "@/lib/observability";
-import { applyRatingAdjustment, getRatingField, getUserRatingByCategory } from "@/lib/rating";
-import type { RequestActor } from "@/lib/request-actor";
-import { publishGameUpdate, publishLobbyUpdate } from "@/lib/realtime";
-import { createAntiCheatReviewEvent } from "@/lib/review-events";
+} from "./game-timing.ts";
+import { maybeAutoRaiseObserveForGame } from "./moderation-policy.ts";
+import { logInfo, logWarn } from "./observability.ts";
+import { applyRatingAdjustment, getRatingField, getUserRatingByCategory } from "./rating.ts";
+import type { RequestActor } from "./request-actor.ts";
+import { publishGameUpdate, publishLobbyUpdate } from "./realtime.ts";
+import { createAntiCheatReviewEvent } from "./review-events.ts";
 
 const participantUserSelect = {
   id: true,

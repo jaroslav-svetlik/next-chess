@@ -6,26 +6,46 @@ export default function RegisterPage() {
   return (
     <main className="content-wrap auth-page">
       <div className="auth-grid">
-        <section className="auth-card">
-          <span className="panel-kicker">Create Account</span>
-          <h1 className="panel-title">Enter the arena with a real profile.</h1>
-          <p className="panel-copy">
-            Account identity now uses a unique username. Email stays unique for login, and display
-            name is optional.
-          </p>
+        <section className="auth-card auth-card-register">
+          <div className="auth-register-hero">
+            <div className="auth-register-hero-copy">
+              <span className="panel-kicker">Create Account</span>
+              <h1 className="panel-title">Set up a profile you can keep.</h1>
+              <p className="panel-copy">
+                Pick a permanent username, add an optional display name, and secure the account
+                with a strong password you save before finishing registration.
+              </p>
+            </div>
+            <div className="auth-register-badges" aria-hidden="true">
+              <span className="pill">Readable flow</span>
+              <span className="pill">Strong password required</span>
+              <span className="pill">Username-first identity</span>
+            </div>
+          </div>
           <AuthForm mode="register" />
-          <p className="muted">
+          <p className="muted auth-switch-copy">
             Already have an account? <Link href="/auth/login">Sign in</Link>
           </p>
         </section>
 
-        <aside className="auth-side">
-          <span className="panel-kicker">Platform goals</span>
-          <ul className="list-clean">
-            <li>Public and private game creation.</li>
-            <li>Bullet, blitz, rapid, and custom controls.</li>
-            <li>Game history and competitive systems are ready for the next phase.</li>
-          </ul>
+        <aside className="auth-side auth-register-side">
+          <div className="auth-side-section">
+            <span className="panel-kicker">Before you start</span>
+            <ul className="list-clean auth-checklist">
+              <li>Choose a username you want to keep publicly.</li>
+              <li>Use a password manager or secure note for the generated password.</li>
+              <li>Your email is used for sign-in and account recovery, not as your public identity.</li>
+            </ul>
+          </div>
+
+          <div className="auth-side-section">
+            <span className="panel-kicker">What your account unlocks</span>
+            <ul className="list-clean auth-checklist">
+              <li>Persistent ratings, game history, and replay access.</li>
+              <li>Public profile presence tied to your username.</li>
+              <li>Public and private game creation across bullet, blitz, rapid, and custom time controls.</li>
+            </ul>
+          </div>
         </aside>
       </div>
     </main>

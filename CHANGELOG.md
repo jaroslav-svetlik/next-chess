@@ -8,6 +8,15 @@ Version source of truth:
 
 The project is still in `0.x`, so versions represent active alpha milestones and can change quickly.
 
+## [0.6.15] - 2026-03-22
+
+Patch release focused on making the registration experience more readable, structured, and onboarding-friendly.
+
+### Changed
+
+- updated [app/auth/register/page.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/auth/register/page.tsx), [components/auth/auth-form.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/auth/auth-form.tsx), and [app/globals.css](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/globals.css) so the register screen now uses clearer sectioning, grouped profile/sign-in/security steps, better helper copy, a more readable confirmation flow, and a stronger responsive layout overall
+- bumped the runtime version in [package.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package.json) to `0.6.15`, updated the root package version in [package-lock.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package-lock.json), and refreshed the reported version in [README.md](/Users/jaroslavsvetlik/Documents/NextJS/chess/README.md)
+
 ## [0.6.14] - 2026-03-22
 
 Production hotfix focused on stopping live-board selection resets during the opening move.

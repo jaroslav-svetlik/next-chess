@@ -249,126 +249,168 @@ export function AuthForm({ mode }: AuthFormProps) {
   const passwordValidationMessage =
     mode === "register" && passwordValue ? validateStrongPassword(passwordValue) : null;
   const passwordStrength = mode === "register" ? getPasswordStrength(passwordValue) : null;
+  const isRegister = mode === "register";
 
   return (
     <form
-      className="field-grid"
+      className={`field-grid${isRegister ? " auth-form-register" : ""}`}
       onChange={handleFormChange}
       onSubmit={handleFormSubmit}
     >
-      {mode === "register" ? (
+      {isRegister ? (
+        <section className="auth-form-section">
+          <div className="auth-form-section-head">
+            <span className="auth-form-step">01</span>
+            <div className="auth-form-section-copy">
+              <h2 className="auth-form-section-title">Public profile</h2>
+              <p>Choose how players will recognize you across the site.</p>
+            </div>
+          </div>
+          <div className="auth-register-fields-grid">
+            <div className="field">
+              <label htmlFor="username">Username</label>
+              <input
+                autoCapitalize="none"
+                autoCorrect="off"
+                autoComplete="username"
+                id="username"
+                name="username"
+                placeholder="unique_handle"
+                required
+              />
+              <p className="field-hint">
+                Unique public handle. Use lowercase letters, numbers and underscores only.
+              </p>
+            </div>
+            <div className="field">
+              <label htmlFor="name">Display name</label>
+              <input
+                autoComplete="nickname"
+                id="name"
+                name="name"
+                placeholder="Optional public label"
+              />
+              <p className="field-hint">Optional. If left empty, your username is shown publicly.</p>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      <section className={`auth-form-section${isRegister ? "" : " auth-form-section-compact"}`}>
+        {isRegister ? (
+          <div className="auth-form-section-head">
+            <span className="auth-form-step">02</span>
+            <div className="auth-form-section-copy">
+              <h2 className="auth-form-section-title">Sign-in details</h2>
+              <p>Use an email you control. It stays private and is only used to access the account.</p>
+            </div>
+          </div>
+        ) : null}
         <div className="field">
-          <label htmlFor="username">Username</label>
+          <label htmlFor="email">Email</label>
           <input
-            autoCapitalize="none"
-            autoCorrect="off"
-            autoComplete="username"
-            id="username"
-            name="username"
-            placeholder="unique_handle"
+            autoComplete="email"
+            id="email"
+            name="email"
+            type="email"
+            placeholder="you@example.com"
             required
           />
-          <p className="field-hint">Unique public handle. Use lowercase letters, numbers and underscores only.</p>
+          {isRegister ? <p className="field-hint">Your email is not shown as your public identity.</p> : null}
         </div>
-      ) : null}
-      {mode === "register" ? (
+      </section>
+
+      <section className={`auth-form-section auth-form-section-security${isRegister ? "" : " auth-form-section-compact"}`}>
+        {isRegister ? (
+          <div className="auth-form-section-head">
+            <span className="auth-form-step">03</span>
+            <div className="auth-form-section-copy">
+              <h2 className="auth-form-section-title">Security</h2>
+              <p>Create a strong password and save it before completing registration.</p>
+            </div>
+          </div>
+        ) : null}
         <div className="field">
-          <label htmlFor="name">Display name</label>
-          <input
-            autoComplete="nickname"
-            id="name"
-            name="name"
-            placeholder="Optional public label"
-          />
-          <p className="field-hint">Optional. If left empty, your username is shown publicly.</p>
-        </div>
-      ) : null}
-      <div className="field">
-        <label htmlFor="email">Email</label>
-        <input
-          autoComplete="email"
-          id="email"
-          name="email"
-          type="email"
-          placeholder="you@example.com"
-          required
-        />
-      </div>
-      <div className="field">
-        <label htmlFor="password">Password</label>
-        <div className="auth-password-row">
-          <input
-            autoComplete={mode === "register" ? "new-password" : "current-password"}
-            id="password"
-            minLength={mode === "register" ? MIN_STRONG_PASSWORD_LENGTH : 8}
-            name="password"
-            onChange={handlePasswordChange}
-            placeholder={
-              mode === "register"
-                ? `At least ${MIN_STRONG_PASSWORD_LENGTH} characters`
-                : "At least 8 characters"
-            }
-            required
-            spellCheck={false}
-            type={mode === "register" && isPasswordVisible ? "text" : "password"}
-            value={passwordValue}
-          />
-          {mode === "register" ? (
-            <button
-              className="secondary-button auth-inline-button"
-              onClick={() => setIsPasswordVisible((currentValue) => !currentValue)}
-              type="button"
-            >
-              {isPasswordVisible ? "Hide" : "Show"}
-            </button>
+          <label htmlFor="password">Password</label>
+          <div className="auth-password-row">
+            <input
+              autoComplete={isRegister ? "new-password" : "current-password"}
+              id="password"
+              minLength={isRegister ? MIN_STRONG_PASSWORD_LENGTH : 8}
+              name="password"
+              onChange={handlePasswordChange}
+              placeholder={
+                isRegister
+                  ? `At least ${MIN_STRONG_PASSWORD_LENGTH} characters`
+                  : "At least 8 characters"
+              }
+              required
+              spellCheck={false}
+              type={isRegister && isPasswordVisible ? "text" : "password"}
+              value={passwordValue}
+            />
+            {isRegister ? (
+              <button
+                className="secondary-button auth-inline-button"
+                onClick={() => setIsPasswordVisible((currentValue) => !currentValue)}
+                type="button"
+              >
+                {isPasswordVisible ? "Hide" : "Show"}
+              </button>
+            ) : null}
+          </div>
+          {isRegister ? (
+            <div className="auth-inline-actions">
+              <button
+                className="secondary-button auth-inline-button"
+                onClick={handleGeneratePassword}
+                type="button"
+              >
+                Generate strong password
+              </button>
+            </div>
           ) : null}
-        </div>
-        {mode === "register" ? (
-          <div className="auth-inline-actions">
-            <button className="secondary-button auth-inline-button" onClick={handleGeneratePassword} type="button">
-              Generate strong password
-            </button>
-          </div>
-        ) : null}
-        {mode === "register" ? (
-          <p className="field-hint">
-            Use at least {MIN_STRONG_PASSWORD_LENGTH} characters with uppercase, lowercase,
-            number, and symbol.
-          </p>
-        ) : null}
-        {mode === "register" && passwordStrength ? (
-          <div
-            className={`password-strength-meter strength-${passwordStrength.score}`}
-            aria-live="polite"
-          >
-            <div className="password-strength-meter-header">
-              <p className="field-hint password-strength-meter-title">Password strength</p>
-              <span className="password-strength-meter-badge">{passwordStrength.label}</span>
-            </div>
-            <div className="password-strength-meter-track" aria-hidden="true">
-              {Array.from({ length: 5 }, (_, index) => (
-                <span
-                  className={`password-strength-meter-bar${index < passwordStrength.score ? " active" : ""}`}
-                  key={index}
-                />
-              ))}
-            </div>
-            <p className="field-hint password-strength-meter-label">
-              {passwordStrength.score <= 2
-                ? "Too predictable. Add length, mixed case, numbers, and symbols."
-                : passwordStrength.score === 3
-                  ? "Decent start. More length or uniqueness would make it stronger."
-                  : "This password is in strong shape. Save it before creating the account."}
+          {isRegister ? (
+            <p className="field-hint">
+              Use at least {MIN_STRONG_PASSWORD_LENGTH} characters with uppercase, lowercase,
+              number, and symbol.
             </p>
-          </div>
-        ) : null}
-        {passwordValidationMessage ? (
-          <p className="field-hint field-hint-error">{passwordValidationMessage}</p>
-        ) : null}
-        {generatedPasswordNotice ? <p className="field-hint">{generatedPasswordNotice}</p> : null}
-      </div>
-      {error ? <p className="muted">{error}</p> : null}
-      {mode === "register" && pendingRegistration ? (
+          ) : null}
+          {isRegister && passwordStrength ? (
+            <div
+              className={`password-strength-meter strength-${passwordStrength.score}`}
+              aria-live="polite"
+            >
+              <div className="password-strength-meter-header">
+                <p className="field-hint password-strength-meter-title">Password strength</p>
+                <span className="password-strength-meter-badge">{passwordStrength.label}</span>
+              </div>
+              <div className="password-strength-meter-track" aria-hidden="true">
+                {Array.from({ length: 5 }, (_, index) => (
+                  <span
+                    className={`password-strength-meter-bar${index < passwordStrength.score ? " active" : ""}`}
+                    key={index}
+                  />
+                ))}
+              </div>
+              <p className="field-hint password-strength-meter-label">
+                {passwordStrength.score <= 2
+                  ? "Too predictable. Add length, mixed case, numbers, and symbols."
+                  : passwordStrength.score === 3
+                    ? "Decent start. More length or uniqueness would make it stronger."
+                    : "This password is in strong shape. Save it before creating the account."}
+              </p>
+            </div>
+          ) : null}
+          {passwordValidationMessage ? (
+            <p className="field-hint field-hint-error">{passwordValidationMessage}</p>
+          ) : null}
+          {generatedPasswordNotice ? <p className="field-hint">{generatedPasswordNotice}</p> : null}
+        </div>
+      </section>
+
+      {error ? <p className="notice danger auth-form-notice">{error}</p> : null}
+      {isRegister && pendingRegistration ? (
         <div className="auth-password-confirmation" role="alert">
           <strong>Save this password before creating the account.</strong>
           <p>Confirm only after you stored it in a password manager or another secure place.</p>
@@ -395,19 +437,26 @@ export function AuthForm({ mode }: AuthFormProps) {
           </div>
         </div>
       ) : null}
-      <button
-        className="primary-button translucent-cta"
-        disabled={isPending || (mode === "register" && pendingRegistration !== null)}
-        type="submit"
-      >
-        {isPending
-          ? "Working..."
-          : mode === "register" && pendingRegistration
-            ? "Confirm saved password below"
-            : mode === "register"
-              ? "Create account"
-              : "Sign in"}
-      </button>
+      <div className="auth-submit-stack">
+        {isRegister ? (
+          <p className="field-hint auth-submit-copy">
+            Finish only after you saved your password somewhere secure.
+          </p>
+        ) : null}
+        <button
+          className="primary-button translucent-cta"
+          disabled={isPending || (isRegister && pendingRegistration !== null)}
+          type="submit"
+        >
+          {isPending
+            ? "Working..."
+            : isRegister && pendingRegistration
+              ? "Confirm saved password below"
+              : isRegister
+                ? "Create account"
+                : "Sign in"}
+        </button>
+      </div>
     </form>
   );
 }

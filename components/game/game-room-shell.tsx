@@ -66,6 +66,7 @@ type GameDetail = {
     ratingDelta: number | null;
     ratingAfter: number | null;
   }>;
+  currentPlayerColor?: "WHITE" | "BLACK" | null;
 };
 
 type LegalMove = {
@@ -229,6 +230,40 @@ export function GameRoomShell({ gameId }: GameRoomShellProps) {
     return nextSnapshot;
   }
 
+  function findActorPlayerColor(
+    snapshot: GameDetail | null,
+    currentActor: GameActor = actor
+  ) {
+    if (!snapshot || !currentActor) {
+      return null;
+    }
+
+    const player = snapshot.players.find((entry) =>
+      currentActor.actorType === "user"
+        ? entry.userId === currentActor.id
+        : entry.guestIdentityId === currentActor.id
+    );
+
+    return player?.color ?? null;
+  }
+
+  function withClientPerspective(
+    snapshot: GameDetail,
+    previousSnapshot: GameDetail | null = null,
+    currentActor: GameActor = actor
+  ) {
+    const actorPlayerColor = findActorPlayerColor(snapshot, currentActor);
+
+    return {
+      ...snapshot,
+      currentPlayerColor:
+        actorPlayerColor ??
+        snapshot.currentPlayerColor ??
+        previousSnapshot?.currentPlayerColor ??
+        null
+    };
+  }
+
   useGameSoundEffects({
     gameId,
     status: game?.status ?? "WAITING",
@@ -309,23 +344,18 @@ export function GameRoomShell({ gameId }: GameRoomShellProps) {
       throw new Error(payload.error ?? "Unable to load game room.");
     }
 
-    setGame(payload.game);
+    const nextGame = payload.game;
+    setGame((current) => withClientPerspective(nextGame, current, payload.actor ?? actor));
     setActor(payload.actor ?? null);
     setError(null);
   }
 
   function getCurrentPlayerColor(snapshot: GameDetail | null) {
-    if (!snapshot || !actor) {
+    if (!snapshot) {
       return null;
     }
 
-    const player = snapshot.players.find((entry) =>
-      actor.actorType === "user"
-        ? entry.userId === actor.id
-        : entry.guestIdentityId === actor.id
-    );
-
-    return player?.color ?? null;
+    return snapshot.currentPlayerColor ?? findActorPlayerColor(snapshot);
   }
 
   function getHostSeat(snapshot: GameDetail | null) {
@@ -562,7 +592,9 @@ export function GameRoomShell({ gameId }: GameRoomShellProps) {
       }
 
       if (message.game) {
-        setGame(message.game as GameDetail);
+        setGame((current) =>
+          withClientPerspective(message.game as GameDetail, current)
+        );
         setError(null);
         return;
       }
@@ -647,7 +679,8 @@ export function GameRoomShell({ gameId }: GameRoomShellProps) {
         throw new Error(payload.error ?? "Unable to join the game.");
       }
 
-      setGame(payload.game);
+      const nextGame = payload.game;
+      setGame((current) => withClientPerspective(nextGame, current));
       setError(null);
     } catch (joinError) {
       setError(joinError instanceof Error ? joinError.message : "Unable to join the game.");
@@ -691,7 +724,8 @@ export function GameRoomShell({ gameId }: GameRoomShellProps) {
         throw new Error(payload.error ?? "Unable to submit move.");
       }
 
-      setGame(payload.game);
+      const nextGame = payload.game;
+      setGame((current) => withClientPerspective(nextGame, current));
       setError(null);
     } catch (moveError) {
       setError(moveError instanceof Error ? moveError.message : "Unable to submit move.");
@@ -719,7 +753,8 @@ export function GameRoomShell({ gameId }: GameRoomShellProps) {
         throw new Error(payload.error ?? "Unable to resign.");
       }
 
-      setGame(payload.game);
+      const nextGame = payload.game;
+      setGame((current) => withClientPerspective(nextGame, current));
       setError(null);
     } catch (resignError) {
       setError(resignError instanceof Error ? resignError.message : "Unable to resign.");

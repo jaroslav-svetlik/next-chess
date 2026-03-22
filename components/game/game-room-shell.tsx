@@ -838,7 +838,7 @@ export function GameRoomShell({ gameId }: GameRoomShellProps) {
         <p className="panel-copy matchmaking-copy">
           {isSeated
             ? `You are queued for ${game.format} ${game.control}. As soon as the second player connects, both players are moved into the live board automatically.`
-            : `This ${game.format} ${game.control} table is open. Join now and the game starts immediately with the 10-second opening rule active.`}
+            : `This ${game.format} ${game.control} table is open. Join now and the game starts immediately with a 10-second first-move timeout rule active.`}
         </p>
         <div className="detail-stack matchmaking-meta">
           <div className="pill">{game.rated ? "Rated" : "Casual"}</div>
@@ -851,7 +851,7 @@ export function GameRoomShell({ gameId }: GameRoomShellProps) {
         {isSeated ? (
           <div className="notice">
             Server queue is active. Once paired, white gets 10 seconds for the first move, then
-            black gets 10 seconds for the first reply.
+            black gets 10 seconds for the first reply. Missing that window loses on time.
           </div>
         ) : hostSeat?.isConnected === false ? (
           <div className="notice">

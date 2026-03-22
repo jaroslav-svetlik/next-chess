@@ -8,6 +8,19 @@ Version source of truth:
 
 The project is still in `0.x`, so versions represent active alpha milestones and can change quickly.
 
+## [0.6.16] - 2026-03-22
+
+Production hotfix focused on making opening-phase flag falls count as real time losses.
+
+### Fixed
+
+- updated [lib/game-deadline.ts](/Users/jaroslavsvetlik/Documents/NextJS/chess/lib/game-deadline.ts) so the early opening deadline no longer cancels a game as `aborted_opening_timeout`; the side that misses the first-move or first-reply window now loses on time just like every other clock expiration, and the result is recorded as a standard `*_timeout` finish with the correct winner
+- updated [components/game/live-board.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/game/live-board.tsx) and [components/game/game-room-shell.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/game/game-room-shell.tsx) so the live UI now says the player loses on time during the opening countdown instead of claiming the game will simply abort
+
+### Changed
+
+- bumped the runtime version in [package.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package.json) to `0.6.16`, updated the root package version in [package-lock.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package-lock.json), and refreshed the reported version in [README.md](/Users/jaroslavsvetlik/Documents/NextJS/chess/README.md)
+
 ## [0.6.15] - 2026-03-22
 
 Patch release focused on making the registration experience more readable, structured, and onboarding-friendly.

@@ -58,7 +58,7 @@ type DeadlineRunResult =
     }
   | {
       status: "completed";
-      action: "opening_abort" | "clock_timeout";
+      action: "clock_timeout";
       gameId: string;
       rated: boolean;
       hasGuestPlayers: boolean;
@@ -172,33 +172,6 @@ export async function syncGameDeadlineJob(game: DeadlineScheduleGame) {
   });
 }
 
-async function finalizeOpeningAbort(tx: Prisma.TransactionClient, game: DeadlineGameRecord) {
-  const updated = await tx.game.update({
-    where: {
-      id: game.id
-    },
-    data: {
-      status: GameStatus.CANCELLED,
-      result: "aborted_opening_timeout",
-      endedAt: new Date(),
-      turnStartedAt: null,
-      events: {
-        create: {
-          type: "opening_timeout_abort",
-          payload: {
-            movesPlayed: game.moves.length,
-            deadlineMs: OPENING_WINDOW_MS,
-            loserColor: game.turnColor
-          }
-        }
-      }
-    },
-    include: gameDeadlineInclude
-  });
-
-  return updated;
-}
-
 async function finalizeClockTimeout(tx: Prisma.TransactionClient, game: DeadlineGameRecord) {
   const player = game.players.find((entry) => entry.color === game.turnColor);
   if (!player) {
@@ -238,7 +211,8 @@ async function finalizeClockTimeout(tx: Prisma.TransactionClient, game: Deadline
                 actorId: "system",
                 loserColor: player.color,
                 winnerColor: timeout.winnerColor,
-                source: "deadline_worker"
+                source: game.moves.length < 2 ? "opening_window" : "deadline_worker",
+                openingPhase: game.moves.length < 2
               }
             },
             ...(ratingAdjustment
@@ -315,28 +289,6 @@ async function processDeadline(gameId: string, expectedTurnStartedAt?: string | 
         } satisfies DeadlineRunResult;
       }
 
-      if (existing.moves.length < 2) {
-        const aborted = await finalizeOpeningAbort(tx, existing);
-
-        return {
-          status: "completed",
-          action: "opening_abort",
-          gameId: existing.id,
-          rated: existing.rated,
-          hasGuestPlayers: gameHasGuestPlayers(existing),
-          patch: {
-            kind: "state_patch",
-            baseVersion: existing.updatedAt.toISOString(),
-            version: aborted.updatedAt.toISOString(),
-            status: aborted.status,
-            result: aborted.result,
-            turnStartedAt: null,
-            openingWindowEndsAt: null,
-            openingMovesRequired: 0
-          }
-        } satisfies DeadlineRunResult;
-      }
-
       const finished = await finalizeClockTimeout(tx, existing);
       if (!finished) {
         return {
@@ -379,48 +331,30 @@ async function processDeadline(gameId: string, expectedTurnStartedAt?: string | 
   );
 
   if (outcome.status === "completed") {
-      await cancelGameDeadlineJob(outcome.gameId);
+    await cancelGameDeadlineJob(outcome.gameId);
 
-    if (outcome.action === "opening_abort") {
-      await publishGameUpdate(outcome.gameId, "opening_timeout_abort", {
-        patch: outcome.patch
-      });
-      await publishLobbyUpdate("game_cancelled", {
-        gameId: outcome.gameId,
-        patch: {
-          kind: "ops",
-          ops: [
-            {
-              type: "remove",
-              gameId: outcome.gameId
-            }
-          ]
-        }
-      });
-    } else {
-      if (!outcome.hasGuestPlayers) {
-        await maybeAutoRaiseObserveForGame(outcome.gameId);
+    if (!outcome.hasGuestPlayers) {
+      await maybeAutoRaiseObserveForGame(outcome.gameId);
+    }
+
+    await publishGameUpdate(outcome.gameId, "clock_timeout", {
+      patch: outcome.patch
+    });
+    await publishLobbyUpdate("game_finished", {
+      gameId: outcome.gameId,
+      patch: {
+        kind: "ops",
+        ops: [
+          {
+            type: "remove",
+            gameId: outcome.gameId
+          }
+        ]
       }
+    });
 
-      await publishGameUpdate(outcome.gameId, "clock_timeout", {
-        patch: outcome.patch
-      });
-      await publishLobbyUpdate("game_finished", {
-        gameId: outcome.gameId,
-        patch: {
-          kind: "ops",
-          ops: [
-            {
-              type: "remove",
-              gameId: outcome.gameId
-            }
-          ]
-        }
-      });
-
-      if (outcome.rated && !outcome.hasGuestPlayers) {
-        await scheduleEngineReview(outcome.gameId);
-      }
+    if (outcome.rated && !outcome.hasGuestPlayers) {
+      await scheduleEngineReview(outcome.gameId);
     }
   }
 

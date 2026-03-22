@@ -779,7 +779,8 @@ export function LiveBoard({
             <div className="opening-banner-copy">
               <strong>Opening Countdown</strong>
               <span>
-                {openingInstruction} in the next {openingCountdownLabel} or the game is aborted.
+                {openingInstruction} in the next {openingCountdownLabel} or that side loses on
+                time.
               </span>
             </div>
             <div className="opening-banner-timer">{openingCountdownLabel}</div>
@@ -1047,8 +1048,8 @@ export function LiveBoard({
 
         {openingCountdownMs !== null ? (
           <div className="notice opening-side-note">
-            Opening phase: {openingInstruction.toLowerCase()} in {openingCountdownLabel} or the
-            game is aborted automatically.
+            Opening phase: {openingInstruction.toLowerCase()} in {openingCountdownLabel} or that
+            player loses on time automatically.
           </div>
         ) : null}
 

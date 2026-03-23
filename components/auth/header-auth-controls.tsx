@@ -24,7 +24,7 @@ const sharedLinks: NavLinkItem[] = [
   {
     href: "/lobby",
     label: "Lobby",
-    description: "Open games, quick pair, and matchmaking"
+    description: "Open games, quick pair and invites"
   },
   {
     href: "/leaderboard",
@@ -200,132 +200,92 @@ export function HeaderAuthControls() {
     <div className="nav-shell" ref={containerRef}>
       <div className="nav-session-shell nav-session-shell-desktop">
         {user ? (
-          <>
-            <GitHubButton className="secondary-button nav-header-auth-button" />
-            <Link href="/lobby" className="nav-cta nav-cta-compact nav-auth-cta">
-              Play now
-            </Link>
-            <div className="nav-user-menu-shell">
-              <button
-                aria-expanded={isDesktopMenuOpen}
-                aria-haspopup="menu"
-                className="nav-user-menu-trigger"
-                onClick={() => setIsDesktopMenuOpen((value) => !value)}
-                type="button"
-              >
-                <UserAvatar initials={initials} name={displayName} src={avatarSrc} />
-                <span className="nav-user-meta">
-                  <span className="nav-user-label">Signed in</span>
-                  <strong>{displayName}</strong>
-                </span>
-                <span className={`nav-menu-chevron${isDesktopMenuOpen ? " open" : ""}`} aria-hidden="true">
-                  ▾
-                </span>
-              </button>
-              {isDesktopMenuOpen ? (
-                <div className="nav-user-menu-dropdown" role="menu">
-                  <div className="nav-user-menu-summary">
-                    <UserAvatar initials={initials} large name={displayName} src={avatarSrc} />
-                    <div className="nav-user-menu-copy">
-                      <strong>{displayName}</strong>
-                      <span>{email ?? "Authenticated account"}</span>
-                    </div>
+          <div className="nav-user-menu-shell">
+            <button
+              aria-expanded={isDesktopMenuOpen}
+              aria-haspopup="menu"
+              className="nav-user-menu-trigger nav-user-menu-trigger-header"
+              onClick={() => setIsDesktopMenuOpen((value) => !value)}
+              type="button"
+            >
+              <UserAvatar initials={initials} name={displayName} src={avatarSrc} />
+              <span className="nav-user-meta">
+                <strong>{displayName}</strong>
+                <span>{email ?? "Ready to play"}</span>
+              </span>
+              <span className={`nav-menu-chevron${isDesktopMenuOpen ? " open" : ""}`} aria-hidden="true">
+                ▾
+              </span>
+            </button>
+
+            {isDesktopMenuOpen ? (
+              <div className="nav-user-menu-dropdown" role="menu">
+                <div className="nav-user-menu-summary">
+                  <UserAvatar initials={initials} large name={displayName} src={avatarSrc} />
+                  <div className="nav-user-menu-copy">
+                    <strong>{displayName}</strong>
+                    <span>{email ?? "Authenticated account"}</span>
                   </div>
-                  <div className="nav-menu-links">
-                    {profileHref ? (
-                      <Link
-                        aria-current={isRouteActive(pathname, profileHref) ? "page" : undefined}
-                        className={`nav-menu-link${isRouteActive(pathname, profileHref) ? " active" : ""}`}
-                        href={profileHref}
-                        role="menuitem"
-                      >
-                        <span>My profile</span>
-                        <small>Ratings, public profile and finished games</small>
-                      </Link>
-                    ) : null}
-                    {navItems.map((item) => (
-                      <Link
-                        aria-current={item.isActive ? "page" : undefined}
-                        className={`nav-menu-link${item.isActive ? " active" : ""}`}
-                        href={item.href}
-                        key={item.href}
-                        role="menuitem"
-                      >
-                        <span>{item.label}</span>
-                        <small>{item.description}</small>
-                      </Link>
-                    ))}
-                  </div>
-                  <button
-                    className="nav-menu-signout"
-                    onClick={() => void handleSignOut()}
+                </div>
+
+                <div className="nav-menu-links">
+                  {profileHref ? (
+                    <Link
+                      aria-current={isRouteActive(pathname, profileHref) ? "page" : undefined}
+                      className={`nav-menu-link${isRouteActive(pathname, profileHref) ? " active" : ""}`}
+                      href={profileHref}
+                      role="menuitem"
+                    >
+                      <span>My profile</span>
+                      <small>Ratings, public profile and finished games</small>
+                    </Link>
+                  ) : null}
+
+                  {navItems.map((item) => (
+                    <Link
+                      aria-current={item.isActive ? "page" : undefined}
+                      className={`nav-menu-link${item.isActive ? " active" : ""}`}
+                      href={item.href}
+                      key={item.href}
+                      role="menuitem"
+                    >
+                      <span>{item.label}</span>
+                      <small>{item.description}</small>
+                    </Link>
+                  ))}
+                </div>
+
+                <div className="nav-menu-auth-actions">
+                  <Link
+                    className="secondary-button nav-menu-auth-button nav-menu-auth-button-secondary"
+                    href="/lobby"
                     role="menuitem"
-                    type="button"
                   >
-                    Sign out
-                  </button>
+                    Play
+                  </Link>
+                  <GitHubButton className="secondary-button nav-menu-auth-button nav-menu-auth-button-secondary" />
                 </div>
-              ) : null}
-            </div>
-          </>
+
+                <button
+                  className="nav-menu-signout"
+                  onClick={() => void handleSignOut()}
+                  role="menuitem"
+                  type="button"
+                >
+                  Sign out
+                </button>
+              </div>
+            ) : null}
+          </div>
         ) : (
-          <>
-            <GitHubButton className="secondary-button nav-header-auth-button" />
-            <Link href="/auth/register" className="nav-cta nav-cta-compact nav-header-auth-button nav-auth-cta">
-              Get started
+          <div className="nav-desktop-auth-group">
+            <Link className="secondary-button nav-header-login-button" href="/auth/login">
+              Login
             </Link>
-            <div className="nav-user-menu-shell">
-              <button
-                aria-expanded={isDesktopMenuOpen}
-                aria-haspopup="menu"
-                className="nav-user-menu-trigger"
-                onClick={() => setIsDesktopMenuOpen((value) => !value)}
-                type="button"
-              >
-                <UserAvatar initials={guestInitials} name="Guest mode" />
-                <span className="nav-user-meta">
-                  <span className="nav-user-label">Guest mode</span>
-                  <strong>Anonymous play</strong>
-                </span>
-                <span className={`nav-menu-chevron${isDesktopMenuOpen ? " open" : ""}`} aria-hidden="true">
-                  ▾
-                </span>
-              </button>
-              {isDesktopMenuOpen ? (
-                <div className="nav-user-menu-dropdown" role="menu">
-                  <div className="nav-user-menu-summary">
-                    <UserAvatar initials={guestInitials} large name="Guest mode" />
-                    <div className="nav-user-menu-copy">
-                      <strong>Anonymous play</strong>
-                      <span>Explore public games, then register to keep ratings and history.</span>
-                    </div>
-                  </div>
-                  <div className="nav-menu-links">
-                    {navItems.map((item) => (
-                      <Link
-                        aria-current={item.isActive ? "page" : undefined}
-                        className={`nav-menu-link${item.isActive ? " active" : ""}`}
-                        href={item.href}
-                        key={item.href}
-                        role="menuitem"
-                      >
-                        <span>{item.label}</span>
-                        <small>{item.description}</small>
-                      </Link>
-                    ))}
-                  </div>
-                  <div className="nav-menu-auth-actions">
-                    <Link className="secondary-button nav-menu-auth-button nav-menu-auth-button-secondary" href="/auth/login" role="menuitem">
-                      Login
-                    </Link>
-                    <Link className="nav-cta nav-menu-auth-button nav-menu-auth-button-primary nav-auth-cta" href="/auth/register" role="menuitem">
-                      Create account
-                    </Link>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          </>
+            <Link className="nav-cta nav-header-register-button nav-auth-cta" href="/auth/register">
+              Register
+            </Link>
+          </div>
         )}
       </div>
 
@@ -341,7 +301,9 @@ export function HeaderAuthControls() {
         <span />
       </button>
 
-      {isMobileMenuOpen ? <button className="nav-mobile-backdrop" onClick={() => setIsMobileMenuOpen(false)} type="button" /> : null}
+      {isMobileMenuOpen ? (
+        <button className="nav-mobile-backdrop" onClick={() => setIsMobileMenuOpen(false)} type="button" />
+      ) : null}
 
       {isMobileMenuOpen ? (
         <div className="nav-mobile-panel">
@@ -376,6 +338,7 @@ export function HeaderAuthControls() {
                 <small>Ratings, public profile and finished games</small>
               </Link>
             ) : null}
+
             {navItems.map((item) => (
               <Link
                 aria-current={item.isActive ? "page" : undefined}
@@ -390,11 +353,12 @@ export function HeaderAuthControls() {
           </div>
 
           <div className="nav-mobile-actions">
+            <GitHubButton className="secondary-button" />
+
             {user ? (
               <>
-                <GitHubButton className="secondary-button" />
                 <Link href="/lobby" className="nav-cta nav-mobile-cta nav-auth-cta">
-                  Enter lobby
+                  Play
                 </Link>
                 <button className="secondary-button danger-button" onClick={() => void handleSignOut()} type="button">
                   Sign out
@@ -402,12 +366,11 @@ export function HeaderAuthControls() {
               </>
             ) : (
               <>
-                <GitHubButton className="secondary-button" />
                 <Link href="/auth/login" className="secondary-button">
                   Login
                 </Link>
                 <Link href="/auth/register" className="nav-cta nav-mobile-cta nav-auth-cta">
-                  Create account
+                  Register
                 </Link>
               </>
             )}

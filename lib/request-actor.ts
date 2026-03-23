@@ -120,6 +120,18 @@ export async function getRequestActor(request: Request): Promise<RequestActor | 
   });
 
   if (session?.user) {
+    void db.session.updateMany({
+      where: {
+        userId: session.user.id,
+        expiresAt: {
+          gt: new Date()
+        }
+      },
+      data: {
+        updatedAt: new Date()
+      }
+    });
+
     const user = await db.user.findUnique({
       where: {
         id: session.user.id

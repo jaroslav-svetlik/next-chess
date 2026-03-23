@@ -691,12 +691,12 @@ export function HomeArenaShell() {
                   <div className="home-live-strip-item online">
                     <span className="home-live-strip-dot" aria-hidden="true" />
                     <strong>{formatMetric(stats.onlinePlayers)}</strong>
-                    <span>Online Players</span>
+                    <span>Online</span>
                   </div>
                   <div className="home-live-strip-item progress">
                     <span className="home-live-strip-dot" aria-hidden="true" />
                     <strong>{formatMetric(stats.gamesInProgress)}</strong>
-                    <span>Games in Progress</span>
+                    <span>Games</span>
                   </div>
                 </div>
                 <div className={`home-live-strip-rating${activeRating === null ? " muted" : ""}`}>

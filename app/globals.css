@@ -1821,7 +1821,7 @@ select {
 
 .home-live-strip {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
   gap: 0.85rem 1.2rem;
@@ -1842,7 +1842,7 @@ select {
 .home-live-strip-metrics {
   display: inline-flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.85rem;
   min-width: 0;
 }
@@ -1890,6 +1890,7 @@ select {
 
 .home-live-strip-rating {
   margin-left: auto;
+  flex-shrink: 0;
   gap: 0.4rem;
   color: rgba(232, 241, 250, 0.9);
 }

@@ -1587,13 +1587,13 @@ select {
   display: inline-grid;
   justify-items: start;
   width: fit-content;
-  font-family: "Avenir Next Condensed", "Arial Narrow", "Helvetica Neue", var(--font-sans), sans-serif;
+  font-family: "Helvetica Neue Condensed Bold", "Arial Narrow", "Franklin Gothic Heavy", "Impact", var(--font-sans), sans-serif;
   gap: 0.02rem;
-  font-size: clamp(4.35rem, 6.4vw, 6.12rem);
-  font-weight: 900;
-  font-style: oblique 12deg;
-  line-height: 0.86;
-  letter-spacing: -0.092em;
+  font-size: clamp(4.1rem, 6vw, 5.7rem);
+  font-weight: 800;
+  font-style: oblique 9deg;
+  line-height: 0.88;
+  letter-spacing: -0.072em;
   text-transform: uppercase;
   text-wrap: nowrap;
 }
@@ -1917,14 +1917,14 @@ select {
 }
 
 .home-live-strip-signin {
-  color: #38ef88;
+  color: #ffd166;
   font-weight: 500;
   transition: color 180ms ease, text-shadow 180ms ease;
 }
 
 .home-live-strip-signin:hover {
-  color: #68f7a5;
-  text-shadow: 0 0 12px rgba(56, 239, 136, 0.24);
+  color: #ffe29a;
+  text-shadow: 0 0 12px rgba(255, 209, 102, 0.24);
 }
 
 .home-events-section,

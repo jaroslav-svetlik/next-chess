@@ -29,7 +29,7 @@ export default function RootLayout({
         <div className="page-shell">
           <header className="site-header">
             <div className="site-header-shell">
-              <Link href="/" className="brand-mark">
+              <Link href="/" className="brand-mark" aria-label="NextChess">
                 <span className="brand-mark-logo" aria-hidden="true">
                   <Image
                     alt=""

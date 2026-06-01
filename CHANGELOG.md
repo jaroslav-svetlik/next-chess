@@ -8,6 +8,17 @@ Version source of truth:
 
 The project is still in `0.x`, so versions represent active alpha milestones and can change quickly.
 
+## [0.6.23] - 2026-06-01
+
+Player profile redesign focused on making public profile pages simpler, denser, and closer to a lichess-style reading flow.
+
+### Changed
+
+- updated [app/players/[userId]/page.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/players/[userId]/page.tsx) so public player profiles now use a compact identity/sidebar layout, a concise rating snapshot, a small record grid, and a scannable finished-game table instead of stacked decorative cards
+- updated [app/globals.css](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/globals.css) with scoped player-profile styles, responsive mobile rows for game history, and a mobile header overflow fix so profile pages no longer create horizontal scroll
+- updated [app/layout.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/layout.tsx) so the brand link has an explicit accessible label while the redundant visual label can stay fully hidden
+- bumped the runtime version in [package.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package.json) to `0.6.23`, updated the root package version in [package-lock.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package-lock.json), and refreshed the reported version in [README.md](/Users/jaroslavsvetlik/Documents/NextJS/chess/README.md)
+
 ## [0.6.22] - 2026-06-01
 
 Production layout hotfix focused on making live and archive boards consistently fit the viewport.

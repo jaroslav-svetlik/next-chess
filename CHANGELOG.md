@@ -8,6 +8,19 @@ Version source of truth:
 
 The project is still in `0.x`, so versions represent active alpha milestones and can change quickly.
 
+## [0.6.22] - 2026-06-01
+
+Production layout hotfix focused on making live and archive boards consistently fit the viewport.
+
+### Fixed
+
+- updated [app/globals.css](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/globals.css) so live game and archive board sizing uses one viewport-aware square dimension instead of independent width and max-height constraints, preventing the board from being clipped on shorter desktop screens
+- updated [app/globals.css](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/globals.css) so the live and archive side desk can scroll inside its own column on constrained desktop heights instead of forcing content to overlap the board layout
+
+### Changed
+
+- bumped the runtime version in [package.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package.json) to `0.6.22`, updated the root package version in [package-lock.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package-lock.json), and refreshed the reported version in [README.md](/Users/jaroslavsvetlik/Documents/NextJS/chess/README.md)
+
 ## [0.6.21] - 2026-06-01
 
 Production hotfix focused on live-game room reliability and the refreshed board/replay experience.

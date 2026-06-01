@@ -4431,12 +4431,26 @@ select {
 
   .game-page .live-board-column .game-board-shell > .board-frame,
   .archive-game-page .archive-board-column .game-board-shell > .board-frame {
-    width: min(100%, 74vh, 760px);
+    width: min(100%, calc(100dvh - var(--match-page-offset) - 3.6rem), 760px);
     height: auto;
-    max-height: min(74vh, calc(100dvh - var(--match-page-offset) - 8rem));
+    max-height: none;
     aspect-ratio: 1;
     justify-self: center;
     align-self: start;
+  }
+
+  .game-page .game-table-column,
+  .archive-game-page .game-table-column {
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+  }
+
+  .game-page .game-table-stack,
+  .archive-game-page .game-table-stack {
+    flex: 0 0 auto;
+    min-height: 0;
+    overflow: visible;
   }
 
   .game-page .game-chat-feed,

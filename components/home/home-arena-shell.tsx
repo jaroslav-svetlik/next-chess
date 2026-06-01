@@ -416,7 +416,8 @@ export function HomeArenaShell() {
       }));
   }, [actor, games]);
 
-  const actorName = actor?.name ?? session?.user?.name ?? "KnightRider";
+  const actorName =
+    actor?.actorType === "user" ? actor.name ?? session?.user?.name ?? "KnightRider" : "KnightRider";
   const waitingGames = useMemo(
     () => viewGames.filter((game) => game.status === "WAITING"),
     [viewGames]
@@ -758,7 +759,10 @@ export function HomeArenaShell() {
               <div className="home-preview-avatar dark">S</div>
               <div className="home-preview-player-meta">
                 <strong>{featuredGames[0]?.host ?? "ShadowMaster"}</strong>
-                <span>{featuredGames[0]?.rated ? "● Online · Rated challenge" : "● Online"}</span>
+                <span className="home-preview-player-status">
+                  <span className="home-preview-player-status-dot" aria-hidden="true" />
+                  <span>{featuredGames[0]?.rated ? "Online · Rated challenge" : "Online"}</span>
+                </span>
               </div>
               <div className="home-preview-clock">02:43</div>
             </div>
@@ -772,7 +776,10 @@ export function HomeArenaShell() {
               <div className="home-preview-avatar light">K</div>
               <div className="home-preview-player-meta">
                 <strong>{actorName}</strong>
-                <span>{actor?.actorType === "user" ? "Registered player" : "Guest session"} · Live</span>
+                <span className="home-preview-player-status">
+                  <span className="home-preview-player-status-dot" aria-hidden="true" />
+                  <span>Online</span>
+                </span>
               </div>
               <div className="home-preview-clock">02:58</div>
             </div>

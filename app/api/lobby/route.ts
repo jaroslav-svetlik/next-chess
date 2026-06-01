@@ -85,16 +85,26 @@ async function getLobbyStats() {
           not: null
         },
         endedAt: null,
-        players: {
-          some: {
-            color: PlayerColor.WHITE
-          }
-        },
         AND: [
           {
             players: {
               some: {
-                color: PlayerColor.BLACK
+                color: PlayerColor.WHITE,
+                isConnected: true,
+                lastSeenAt: {
+                  gte: activeSince
+                }
+              }
+            }
+          },
+          {
+            players: {
+              some: {
+                color: PlayerColor.BLACK,
+                isConnected: true,
+                lastSeenAt: {
+                  gte: activeSince
+                }
               }
             }
           }

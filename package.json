@@ -1,9 +1,9 @@
 {
   "name": "nextchess",
-  "version": "0.6.20",
+  "version": "0.6.21",
   "private": true,
   "scripts": {
-    "dev": "node server.js",
+    "dev": "WATCHPACK_POLLING=true node server.js",
     "build": "next build --webpack",
     "start": "NODE_ENV=production node server.js",
     "worker": "node --experimental-strip-types worker.ts",

@@ -93,6 +93,14 @@ type BoardArrow = {
   to: string;
 };
 
+type SideFeedEntry = {
+  id: string;
+  label: string;
+  text: string;
+  meta?: string;
+  tone?: "accent" | "warning" | "neutral";
+};
+
 const MAX_PREMOVES = 10;
 
 function buildPremovePreviewState(
@@ -232,12 +240,14 @@ function useClockState(
   turnStartedAt: string | null,
   status: "ACTIVE" | "FINISHED" | "CANCELLED"
 ) {
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
     if (status !== "ACTIVE") {
       return;
     }
+
+    setNow(Date.now());
 
     const intervalId = window.setInterval(() => {
       setNow(Date.now());
@@ -248,7 +258,8 @@ function useClockState(
     };
   }, [status]);
 
-  const elapsed = turnStartedAt ? Math.max(0, now - new Date(turnStartedAt).getTime()) : 0;
+  const elapsed =
+    now !== null && turnStartedAt ? Math.max(0, now - new Date(turnStartedAt).getTime()) : 0;
   const whiteTime =
     turnColor === "WHITE" && status === "ACTIVE"
       ? Math.max(0, (whitePlayer?.timeRemainingMs ?? 0) - elapsed)
@@ -277,12 +288,14 @@ function useOpeningCountdown(
   openingMovesRequired: number,
   status: "ACTIVE" | "FINISHED" | "CANCELLED"
 ) {
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
     if (!openingWindowEndsAt || openingMovesRequired <= 0 || status !== "ACTIVE") {
       return;
     }
+
+    setNow(Date.now());
 
     const intervalId = window.setInterval(() => {
       setNow(Date.now());
@@ -294,6 +307,10 @@ function useOpeningCountdown(
   }, [openingMovesRequired, openingWindowEndsAt, status]);
 
   if (!openingWindowEndsAt || openingMovesRequired <= 0 || status !== "ACTIVE") {
+    return null;
+  }
+
+  if (now === null) {
     return null;
   }
 
@@ -332,6 +349,24 @@ function formatDisplayedRating(player: PlayerState | null) {
   return player.provisional ? `${ratingValue}?` : `${ratingValue}`;
 }
 
+function getPlayerInitials(player: PlayerState | null, fallback: string, color: "WHITE" | "BLACK") {
+  const name = displayPlayerName(player, fallback, color);
+
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((chunk) => chunk[0]?.toUpperCase() ?? "")
+    .join("");
+}
+
+function formatFeedTimestamp(value: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(new Date(value));
+}
+
 export function LiveBoard({
   fen,
   board,
@@ -363,6 +398,7 @@ export function LiveBoard({
   const [drawnArrows, setDrawnArrows] = useState<BoardArrow[]>([]);
   const [annotationStart, setAnnotationStart] = useState<string | null>(null);
   const [annotationHover, setAnnotationHover] = useState<string | null>(null);
+  const [isBoardFlipped, setIsBoardFlipped] = useState(false);
   const canMove = status === "ACTIVE" && currentPlayerColor === turnColor && legalMoves.length > 0;
   const canPremove =
     status === "ACTIVE" &&
@@ -371,7 +407,8 @@ export function LiveBoard({
     !isSubmittingMove;
   const canInteractWithBoard = canMove || canPremove;
   const clientColor = getClientColor(currentPlayerColor);
-  const isBlackPerspective = currentPlayerColor === "BLACK";
+  const naturalBlackPerspective = currentPlayerColor === "BLACK";
+  const isBlackPerspective = isBoardFlipped ? !naturalBlackPerspective : naturalBlackPerspective;
   const { whiteTime, blackTime } = useClockState(
     whitePlayer,
     blackPlayer,
@@ -584,12 +621,28 @@ export function LiveBoard({
     };
   }, [annotationHover, annotationStart, squareDisplayMap]);
 
-  const topPlayer = isBlackPerspective
-    ? { label: "White", player: whitePlayer, time: whiteTime, turn: turnColor === "WHITE", capturedPieces: captured.white, capturedColor: "b" as const, fallback: "Waiting...", color: "WHITE" as const }
-    : { label: "Black", player: blackPlayer, time: blackTime, turn: turnColor === "BLACK", capturedPieces: captured.white, capturedColor: "b" as const, fallback: "Waiting...", color: "BLACK" as const };
-  const bottomPlayer = isBlackPerspective
-    ? { label: "Black", player: blackPlayer, time: blackTime, turn: turnColor === "BLACK", capturedPieces: captured.black, capturedColor: "w" as const, fallback: "Waiting...", color: "BLACK" as const }
-    : { label: "White", player: whitePlayer, time: whiteTime, turn: turnColor === "WHITE", capturedPieces: captured.black, capturedColor: "w" as const, fallback: "Waiting...", color: "WHITE" as const };
+  const whiteDeskPlayer = {
+    label: "White",
+    player: whitePlayer,
+    time: whiteTime,
+    turn: turnColor === "WHITE",
+    capturedPieces: captured.black,
+    capturedColor: "b" as const,
+    fallback: "Waiting...",
+    color: "WHITE" as const
+  };
+  const blackDeskPlayer = {
+    label: "Black",
+    player: blackPlayer,
+    time: blackTime,
+    turn: turnColor === "BLACK",
+    capturedPieces: captured.white,
+    capturedColor: "w" as const,
+    fallback: "Waiting...",
+    color: "BLACK" as const
+  };
+  const topPlayer = isBlackPerspective ? whiteDeskPlayer : blackDeskPlayer;
+  const bottomPlayer = isBlackPerspective ? blackDeskPlayer : whiteDeskPlayer;
   const topRatedPlayer = topPlayer.player;
   const bottomRatedPlayer = bottomPlayer.player;
   const openingCountdownLabel =
@@ -634,6 +687,113 @@ export function LiveBoard({
         })
         .join(", ")
     : null;
+  const whitePlayerName = displayPlayerName(whitePlayer, "White", "WHITE");
+  const blackPlayerName = displayPlayerName(blackPlayer, "Black", "BLACK");
+  const whiteDisplayedRating = formatDisplayedRating(whitePlayer);
+  const blackDisplayedRating = formatDisplayedRating(blackPlayer);
+  const topPlayerName = displayPlayerName(topPlayer.player, topPlayer.fallback, topPlayer.color);
+  const bottomPlayerName = displayPlayerName(
+    bottomPlayer.player,
+    bottomPlayer.fallback,
+    bottomPlayer.color
+  );
+  const topPlayerInitials = getPlayerInitials(topPlayer.player, topPlayer.fallback, topPlayer.color);
+  const bottomPlayerInitials = getPlayerInitials(
+    bottomPlayer.player,
+    bottomPlayer.fallback,
+    bottomPlayer.color
+  );
+  const topDisplayedRating = formatDisplayedRating(topRatedPlayer);
+  const bottomDisplayedRating = formatDisplayedRating(bottomRatedPlayer);
+  const latestMove = moves[moves.length - 1] ?? null;
+  const currentMovePly = latestMove?.ply ?? null;
+  const isClientInCheck =
+    status === "ACTIVE" && inCheck && !!currentPlayerColor && currentPlayerColor === turnColor;
+  const statusHeadline =
+    status === "ACTIVE"
+      ? isClientInCheck
+        ? "Your king is under pressure"
+        : `${turnColor === bottomPlayer.color ? bottomPlayerName : topPlayerName} to move`
+      : formatResult(result, whitePlayer, blackPlayer) ?? "Game finished";
+  const liveFeedEntries = useMemo<SideFeedEntry[]>(() => {
+    const entries: SideFeedEntry[] = [
+      {
+        id: "status",
+        label: status === "ACTIVE" ? "Status" : "Result",
+        text: statusHeadline,
+        meta: status === "ACTIVE" ? `${turnColor} to move` : `${rated ? "Rated" : "Casual"} game`,
+        tone: isClientInCheck ? "warning" : "accent"
+      }
+    ];
+
+    if (openingCountdownLabel) {
+      entries.push({
+        id: "opening",
+        label: "Opening",
+        text: `${openingInstruction} in ${openingCountdownLabel}`,
+        meta: "Flag window is active",
+        tone: "accent"
+      });
+    }
+
+    if (queuedPremoveLabel) {
+      entries.push({
+        id: "premoves",
+        label: "Queue",
+        text: queuedPremoveLabel,
+        meta: `${activeQueuedPremoves.length} premove${activeQueuedPremoves.length === 1 ? "" : "s"} ready`
+      });
+    }
+
+    if (drawnArrows.length || markedSquares.length) {
+      entries.push({
+        id: "board-tools",
+        label: "Board",
+        text: `${drawnArrows.length} arrow${drawnArrows.length === 1 ? "" : "s"} and ${markedSquares.length} mark${markedSquares.length === 1 ? "" : "s"} on the board`,
+        meta: "Right click to add or remove annotations"
+      });
+    }
+
+    if (moves.length === 0) {
+      entries.push({
+        id: "start",
+        label: "Room",
+        text: "No moves have been played yet.",
+        meta: `${controlLabel} • ${rated ? "Rated" : "Casual"}`
+      });
+    } else {
+      entries.push(
+        ...moves.slice(-8).reverse().map((move) => {
+          const moverName = move.ply % 2 === 1 ? whitePlayerName : blackPlayerName;
+
+          return {
+            id: move.id,
+            label: moverName,
+            text: move.san,
+            meta: `Move ${Math.ceil(move.ply / 2)} • ${formatFeedTimestamp(move.createdAt)}`
+          };
+        })
+      );
+    }
+
+    return entries;
+  }, [
+    activeQueuedPremoves.length,
+    blackPlayerName,
+    controlLabel,
+    drawnArrows.length,
+    isClientInCheck,
+    markedSquares.length,
+    moves,
+    openingCountdownLabel,
+    openingInstruction,
+    queuedPremoveLabel,
+    rated,
+    status,
+    statusHeadline,
+    turnColor,
+    whitePlayerName
+  ]);
 
   function isOwnPiece(piece: BoardPiece | null) {
     return !!piece && !!clientColor && piece.color === clientColor && canInteractWithBoard;
@@ -821,360 +981,422 @@ export function LiveBoard({
     void onSubmitMove(matchingMove);
   }, [activeQueuedPremoves, canMove, isSubmittingMove, legalMoves, onSubmitMove]);
 
-  return (
-    <div className="game-grid">
-      <section className="board-shell">
-        {openingCountdownLabel ? (
-          <div className="opening-banner">
-            <div className="opening-banner-copy">
-              <strong>Opening Countdown</strong>
-              <span>
-                {openingInstruction} in the next {openingCountdownLabel} or that side loses on
-                time.
-              </span>
-            </div>
-            <div className="opening-banner-timer">{openingCountdownLabel}</div>
-          </div>
-        ) : null}
+  function renderTableMaterial(
+    position: "top" | "bottom",
+    playerSlot: typeof topPlayer,
+  ) {
+    return (
+      <div className={`captured-row game-table-material game-table-material-${position}`}>
+        {playerSlot.capturedPieces.length ? (
+          playerSlot.capturedPieces.map((piece, index) => (
+            <span
+              className="captured-piece"
+              key={`${position}-material-${playerSlot.label.toLowerCase()}-${piece}-${index}`}
+            >
+              <ChessPieceSvg color={playerSlot.capturedColor} type={piece} />
+            </span>
+          ))
+        ) : (
+          <span className="game-table-empty-captures">No captures yet</span>
+        )}
+      </div>
+    );
+  }
 
-        <div className="player-card">
-          <div className="player-row">
-            <div>
-              <div className="panel-kicker">{topPlayer.label}</div>
-              <strong>{displayPlayerName(topPlayer.player, topPlayer.fallback, topPlayer.color)}</strong>
-              {topRatedPlayer && topRatedPlayer.rating !== null ? (
-                <div className="player-rating-line">
-                  <span>{formatDisplayedRating(topRatedPlayer)}</span>
-                  {rated && topRatedPlayer.ratingDelta !== null ? (
-                    <span className={`rating-delta ${topRatedPlayer.ratingDelta >= 0 ? "up" : "down"}`}>
-                      {formatRatingDelta(topRatedPlayer.ratingDelta)}
-                    </span>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
-            <div className={`clock ${topPlayer.turn ? "live" : ""}`}>
-              {formatClock(topPlayer.time)}
-            </div>
-          </div>
-          <div className="captured-row">
-            {topPlayer.capturedPieces.map((piece, index) => (
-              <span className="captured-piece" key={`${topPlayer.label.toLowerCase()}-captured-${piece}-${index}`}>
-                <ChessPieceSvg color={topPlayer.capturedColor} type={piece} />
-              </span>
-            ))}
+  function renderTableClock(
+    position: "top" | "bottom",
+    playerSlot: typeof topPlayer
+  ) {
+    return (
+      <div
+        className={`game-table-clock-row game-table-clock-row-${position} ${
+          playerSlot.turn && status === "ACTIVE" ? "live" : ""
+        }`}
+      >
+        <div className={`game-table-clock ${playerSlot.turn && status === "ACTIVE" ? "live" : ""}`}>
+          {formatClock(playerSlot.time)}
+        </div>
+      </div>
+    );
+  }
+
+  function renderTableUser(
+    position: "top" | "bottom",
+    playerSlot: typeof topPlayer,
+    playerName: string,
+    playerInitials: string,
+    displayedRating: string | null
+  ) {
+    const ratingDelta = formatRatingDelta(playerSlot.player?.ratingDelta ?? null);
+    const playerStatus = playerSlot.player
+      ? playerSlot.player.isConnected
+        ? playerSlot.turn && status === "ACTIVE"
+          ? "Thinking"
+          : "Connected"
+        : "Disconnected"
+      : status === "ACTIVE"
+        ? "Waiting for seat"
+        : "Seat unavailable";
+
+    return (
+      <section className={`game-table-user game-table-user-${position}`}>
+        <div className="game-table-user-main">
+          <div className="game-player-rail-avatar">{playerInitials}</div>
+          <div className="game-table-user-copy">
+            <span>{playerSlot.color}</span>
+            <strong>{playerName}</strong>
           </div>
         </div>
-
-        <div
-          className={`board-frame ${canInteractWithBoard ? "interactive" : ""} ${dragSource ? "dragging" : ""} ${canPremove ? "premove-mode" : ""}`}
-          onContextMenu={(event) => {
-            event.preventDefault();
-          }}
-        >
-          <svg aria-hidden="true" className="board-annotations" viewBox="0 0 100 100">
-            <defs>
-              <marker
-                id="board-arrowhead"
-                markerHeight="6"
-                markerUnits="strokeWidth"
-                markerWidth="6"
-                orient="auto"
-                refX="5.3"
-                refY="3"
-              >
-                <path d="M0,0 L6,3 L0,6 Z" fill="rgba(118, 255, 162, 0.82)" />
-              </marker>
-            </defs>
-
-            {annotationArrows.map((arrow) => (
-              <line
-                className="board-arrow"
-                key={arrow.key}
-                markerEnd="url(#board-arrowhead)"
-                x1={arrow.x1}
-                x2={arrow.x2}
-                y1={arrow.y1}
-                y2={arrow.y2}
-              />
-            ))}
-
-            {previewArrow ? (
-              <line
-                className="board-arrow preview"
-                markerEnd="url(#board-arrowhead)"
-                x1={previewArrow.x1}
-                x2={previewArrow.x2}
-                y1={previewArrow.y1}
-                y2={previewArrow.y2}
-              />
-            ) : null}
-          </svg>
-
-          {boardTiles.map((tile) => {
-              const piece = tile.piece;
-              const square = tile.square;
-              const squareIsSelected = selectedSquare === square;
-              const squareIsTarget = highlightedTargets.has(square);
-              const squareIsPremoveTarget = canPremove && squareIsTarget;
-              const squareIsPremoveSelected = canPremove && squareIsSelected;
-              const squareIsDraggable = isOwnPiece(piece);
-              const squareIsLastMove = lastMove?.from === square || lastMove?.to === square;
-              const isPromotionSquare = promotionPosition?.square === square;
-              const squareIsQueuedPremoveSource = activeQueuedPremoves.some(
-                (move) => move.from === square
-              );
-              const squareIsQueuedPremoveTarget = activeQueuedPremoves.some(
-                (move) => move.to === square
-              );
-              const squareIsCheckedKing =
-                status === "ACTIVE" &&
-                inCheck &&
-                piece?.type === "k" &&
-                ((turnColor === "WHITE" && piece.color === "w") ||
-                  (turnColor === "BLACK" && piece.color === "b"));
-              const squareIsMarked = markedSquares.includes(square);
-
-              return (
-                <div
-                  key={square}
-                  className={`board-tile ${tile.isLight ? "light" : "dark"} ${squareIsSelected ? "selected" : ""} ${squareIsTarget ? "target" : ""} ${squareIsDraggable ? "movable" : ""} ${squareIsLastMove ? "last-move" : ""} ${isPromotionSquare ? "promotion-host" : ""} ${squareIsCheckedKing ? "checked-king" : ""} ${squareIsQueuedPremoveSource ? "queued-premove-source" : ""} ${squareIsQueuedPremoveTarget ? "queued-premove-target" : ""} ${squareIsPremoveTarget ? "premove-target" : ""} ${squareIsPremoveSelected ? "premove-selected" : ""} ${squareIsMarked ? "marked-square" : ""}`}
-                  onClick={() => {
-                    void handleSquareClick(square, piece);
-                  }}
-                  onContextMenu={(event) => {
-                    event.preventDefault();
-                  }}
-                  onDragOver={(event) => {
-                    if (dragSource && highlightedTargets.has(square)) {
-                      event.preventDefault();
-                    }
-                  }}
-                  onMouseDown={(event) => {
-                    if (event.button !== 2) {
-                      return;
-                    }
-
-                    event.preventDefault();
-                    handleAnnotationStart(square);
-                  }}
-                  onMouseEnter={() => {
-                    if (!annotationStart) {
-                      return;
-                    }
-
-                    setAnnotationHover(square);
-                  }}
-                  onMouseUp={(event) => {
-                    if (event.button !== 2) {
-                      return;
-                    }
-
-                    event.preventDefault();
-                    handleAnnotationEnd(square);
-                  }}
-                  onDrop={(event) => {
-                    event.preventDefault();
-                    void handleDrop(square);
-                  }}
-                  title={square}
-                >
-                  {tile.showRank ? <span className="board-rank">{tile.rankLabel}</span> : null}
-                  {tile.showFile ? <span className="board-file">{tile.fileLabel}</span> : null}
-                  {piece ? (
-                    <span
-                      className={`board-piece ${squareIsDraggable ? "draggable" : ""}`}
-                      draggable={squareIsDraggable && !isSubmittingMove}
-                      onDragEnd={handleDragEnd}
-                      onDragStart={(event) => {
-                        handleDragStart(square);
-                        event.dataTransfer.effectAllowed = "move";
-                        event.dataTransfer.setData("text/plain", square);
-                      }}
-                    >
-                      <ChessPieceSvg color={piece.color} type={piece.type} />
-                    </span>
-                  ) : null}
-
-                  {isPromotionSquare ? (
-                    <div
-                      className={`promotion-tile-picker promotion-tile-picker-${promotionPosition.direction}`}
-                    >
-                      {promotionChoices.map((move) => (
-                        <button
-                          aria-label={`Promote to ${move.promotion ?? "q"}`}
-                          className="promotion-square"
-                          key={move.promotion ?? move.lan}
-                          onClick={() => {
-                            void submitBoardMove(move);
-                          }}
-                          type="button"
-                        >
-                          <ChessPieceSvg
-                            color={(clientColor ?? "w") as "w" | "b"}
-                            type={(move.promotion ?? "q") as "p" | "n" | "b" | "r" | "q" | "k"}
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-              );
-            })}
-
-          {pendingPromotion ? (
-            <>
-              <button
-                aria-label={`Close ${pendingPromotion.mode} choices`}
-                className="promotion-backdrop"
-                onClick={() => {
-                  setPendingPromotion(null);
-                  setSelectedSquare(null);
-                  setDragSource(null);
-                }}
-                type="button"
-              />
-            </>
+        <div className="game-table-user-meta">
+          <span
+            className={`game-connection-pill${playerSlot.player?.isConnected ? " live" : ""}${
+              playerStatus === "Disconnected" ? " offline" : ""
+            }`}
+          >
+            {playerStatus}
+          </span>
+          {currentPlayerColor === playerSlot.color ? <span className="pill">You</span> : null}
+          {displayedRating ? <span className="pill">Rating {displayedRating}</span> : null}
+          {rated && ratingDelta ? (
+            <span
+              className={`pill rating-delta-pill ${
+                (playerSlot.player?.ratingDelta ?? 0) >= 0 ? "up" : "down"
+              }`}
+            >
+              {ratingDelta}
+            </span>
           ) : null}
-        </div>
-
-        <div className="player-card">
-          <div className="player-row">
-            <div>
-              <div className="panel-kicker">{bottomPlayer.label}</div>
-              <strong>
-                {displayPlayerName(bottomPlayer.player, bottomPlayer.fallback, bottomPlayer.color)}
-              </strong>
-              {bottomRatedPlayer && bottomRatedPlayer.rating !== null ? (
-                <div className="player-rating-line">
-                  <span>{formatDisplayedRating(bottomRatedPlayer)}</span>
-                  {rated && bottomRatedPlayer.ratingDelta !== null ? (
-                    <span
-                      className={`rating-delta ${bottomRatedPlayer.ratingDelta >= 0 ? "up" : "down"}`}
-                    >
-                      {formatRatingDelta(bottomRatedPlayer.ratingDelta)}
-                    </span>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
-            <div className={`clock ${bottomPlayer.turn ? "live" : ""}`}>
-              {formatClock(bottomPlayer.time)}
-            </div>
-          </div>
-          <div className="captured-row">
-            {bottomPlayer.capturedPieces.map((piece, index) => (
-              <span className="captured-piece" key={`${bottomPlayer.label.toLowerCase()}-captured-${piece}-${index}`}>
-                <ChessPieceSvg color={bottomPlayer.capturedColor} type={piece} />
-              </span>
-            ))}
-          </div>
         </div>
       </section>
+    );
+  }
 
-      <aside className="glass-panel game-side-panel">
-        <div className={`status-banner ${status !== "ACTIVE" ? "finished" : ""}`}>
-          <span>
-            {status === "ACTIVE"
-              ? `${turnColor} to move`
-              : formatResult(result, whitePlayer, blackPlayer) ?? "Game finished"}
-          </span>
-          {inCheck && status === "ACTIVE" ? <strong>Check</strong> : null}
-        </div>
+  return (
+    <div className="game-arena-shell">
+      <div className="game-grid game-arena-layout game-room-layout">
+        <aside className="game-side-column">
+          <section className="glass-panel game-side-meta">
+            <div className="game-side-meta-head">
+              <span className="panel-kicker">Live Game</span>
+              <span className="pill">{controlLabel}</span>
+            </div>
+            <div className="game-side-meta-match">
+              <strong>{whitePlayerName}</strong>
+              <span>vs</span>
+              <strong>{blackPlayerName}</strong>
+            </div>
+            <div className="detail-stack">
+              <div className="pill">{rated ? "Rated" : "Casual"}</div>
+              {whiteDisplayedRating ? <div className="pill">W {whiteDisplayedRating}</div> : null}
+              {blackDisplayedRating ? <div className="pill">B {blackDisplayedRating}</div> : null}
+              <div className="pill">{currentPlayerColor ? `Seat: ${currentPlayerColor}` : "Spectator"}</div>
+              <div className="pill">{status === "ACTIVE" ? `Turn: ${turnColor}` : status}</div>
+            </div>
+          </section>
 
-        <div className="game-card-header">
-          <div>
-            <div className="panel-kicker">Live Game</div>
-            <h2 className="panel-title">Match Desk</h2>
-          </div>
-          <span className="pill">{controlLabel}</span>
-        </div>
+          <section className="glass-panel game-chat-panel">
+            <div className="game-chat-head">
+              <div>
+                <span className="panel-kicker">Chat</span>
+                <h2 className="game-chat-title">Messages</h2>
+              </div>
+              <span className="game-chat-count">{liveFeedEntries.length}</span>
+            </div>
 
-        <div className="detail-stack">
-          <div className="pill">{rated ? "Rated" : "Casual"}</div>
-          <div className="pill">Turn: {turnColor}</div>
-          {currentPlayerColor ? <div className="pill">You: {currentPlayerColor}</div> : null}
-          {lastMove ? <div className="pill">Last move: {lastMove.san}</div> : null}
-          {activeQueuedPremoves.length ? (
-            <div className="pill">Premoves: {activeQueuedPremoves.length}</div>
-          ) : null}
-        </div>
+            <div aria-live="polite" className="game-chat-feed">
+              {liveFeedEntries.map((entry) => (
+                <article
+                  className={`game-chat-entry${entry.tone ? ` ${entry.tone}` : ""}`}
+                  key={entry.id}
+                >
+                  <div className="game-chat-entry-badge">{entry.label.slice(0, 2).toUpperCase()}</div>
+                  <div className="game-chat-entry-body">
+                    <div className="game-chat-entry-meta">
+                      <strong>{entry.label}</strong>
+                      {entry.meta ? <span>{entry.meta}</span> : null}
+                    </div>
+                    <p>{entry.text}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        </aside>
 
-        {openingCountdownMs !== null ? (
-          <div className="notice opening-side-note">
-            Opening phase: {openingInstruction.toLowerCase()} in {openingCountdownLabel} or that
-            player loses on time automatically.
-          </div>
-        ) : null}
-
-        {canMove ? (
-          <p className="panel-copy">
-            Drag your piece or tap piece then target. Legal destinations are highlighted and
-            promotion opens a picker.
-          </p>
-        ) : canPremove ? (
-          <p className="panel-copy">
-            Your turn has not started yet. You can queue up to {MAX_PREMOVES} premoves. They fire
-            in order if they stay legal. Use clear premove to cancel the queue.
-          </p>
-        ) : (
-          <p className="panel-copy">
-            {status === "ACTIVE"
-              ? currentPlayerColor
-                ? "Waiting for your opponent. The board stays in sync live."
-                : "You are currently spectating this room."
-              : "This game is finished."}
-          </p>
-        )}
-
-        <div className="action-row">
-          <button className="secondary-button" disabled={status !== "ACTIVE" || isSubmittingMove} onClick={() => void onResign()} type="button">
-            Resign
-          </button>
-          {activeQueuedPremoves.length ? (
-            <button
-              className="secondary-button premove-clear-button"
-              disabled={isSubmittingMove}
-              onClick={clearQueuedPremove}
-              type="button"
+        <div className="game-center-column live-board-column">
+          <section className="board-shell game-board-shell">
+            <div
+              className={`board-frame live-game-board ${canInteractWithBoard ? "interactive" : ""} ${dragSource ? "dragging" : ""} ${canPremove ? "premove-mode" : ""}`}
+              onContextMenu={(event) => {
+                event.preventDefault();
+              }}
             >
-              Clear premove
-            </button>
-          ) : null}
-          {drawnArrows.length || markedSquares.length ? (
+              <svg aria-hidden="true" className="board-annotations" viewBox="0 0 100 100">
+                <defs>
+                  <marker
+                    id="board-arrowhead"
+                    markerHeight="6"
+                    markerUnits="strokeWidth"
+                    markerWidth="6"
+                    orient="auto"
+                    refX="5.3"
+                    refY="3"
+                  >
+                    <path d="M0,0 L6,3 L0,6 Z" fill="rgba(118, 255, 162, 0.82)" />
+                  </marker>
+                </defs>
+
+                {annotationArrows.map((arrow) => (
+                  <line
+                    className="board-arrow"
+                    key={arrow.key}
+                    markerEnd="url(#board-arrowhead)"
+                    x1={arrow.x1}
+                    x2={arrow.x2}
+                    y1={arrow.y1}
+                    y2={arrow.y2}
+                  />
+                ))}
+
+                {previewArrow ? (
+                  <line
+                    className="board-arrow preview"
+                    markerEnd="url(#board-arrowhead)"
+                    x1={previewArrow.x1}
+                    x2={previewArrow.x2}
+                    y1={previewArrow.y1}
+                    y2={previewArrow.y2}
+                  />
+                ) : null}
+              </svg>
+
+              {boardTiles.map((tile) => {
+                const piece = tile.piece;
+                const square = tile.square;
+                const squareIsSelected = selectedSquare === square;
+                const squareIsTarget = highlightedTargets.has(square);
+                const squareIsPremoveTarget = canPremove && squareIsTarget;
+                const squareIsPremoveSelected = canPremove && squareIsSelected;
+                const squareIsDraggable = isOwnPiece(piece);
+                const squareIsLastMove = lastMove?.from === square || lastMove?.to === square;
+                const isPromotionSquare = promotionPosition?.square === square;
+                const squareIsQueuedPremoveSource = activeQueuedPremoves.some(
+                  (move) => move.from === square
+                );
+                const squareIsQueuedPremoveTarget = activeQueuedPremoves.some(
+                  (move) => move.to === square
+                );
+                const squareIsCheckedKing =
+                  status === "ACTIVE" &&
+                  inCheck &&
+                  piece?.type === "k" &&
+                  ((turnColor === "WHITE" && piece.color === "w") ||
+                    (turnColor === "BLACK" && piece.color === "b"));
+                const squareIsMarked = markedSquares.includes(square);
+
+                return (
+                  <div
+                    key={square}
+                    className={`board-tile ${tile.isLight ? "light" : "dark"} ${squareIsSelected ? "selected" : ""} ${squareIsTarget ? "target" : ""} ${squareIsDraggable ? "movable" : ""} ${squareIsLastMove ? "last-move" : ""} ${isPromotionSquare ? "promotion-host" : ""} ${squareIsCheckedKing ? "checked-king" : ""} ${squareIsQueuedPremoveSource ? "queued-premove-source" : ""} ${squareIsQueuedPremoveTarget ? "queued-premove-target" : ""} ${squareIsPremoveTarget ? "premove-target" : ""} ${squareIsPremoveSelected ? "premove-selected" : ""} ${squareIsMarked ? "marked-square" : ""}`}
+                    onClick={() => {
+                      void handleSquareClick(square, piece);
+                    }}
+                    onContextMenu={(event) => {
+                      event.preventDefault();
+                    }}
+                    onDragOver={(event) => {
+                      if (dragSource && highlightedTargets.has(square)) {
+                        event.preventDefault();
+                      }
+                    }}
+                    onMouseDown={(event) => {
+                      if (event.button !== 2) {
+                        return;
+                      }
+
+                      event.preventDefault();
+                      handleAnnotationStart(square);
+                    }}
+                    onMouseEnter={() => {
+                      if (!annotationStart) {
+                        return;
+                      }
+
+                      setAnnotationHover(square);
+                    }}
+                    onMouseUp={(event) => {
+                      if (event.button !== 2) {
+                        return;
+                      }
+
+                      event.preventDefault();
+                      handleAnnotationEnd(square);
+                    }}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      void handleDrop(square);
+                    }}
+                    title={square}
+                  >
+                    {tile.showRank ? <span className="board-rank">{tile.rankLabel}</span> : null}
+                    {tile.showFile ? <span className="board-file">{tile.fileLabel}</span> : null}
+                    {piece ? (
+                      <span
+                        className={`board-piece ${squareIsDraggable ? "draggable" : ""}`}
+                        draggable={squareIsDraggable && !isSubmittingMove}
+                        onDragEnd={handleDragEnd}
+                        onDragStart={(event) => {
+                          handleDragStart(square);
+                          event.dataTransfer.effectAllowed = "move";
+                          event.dataTransfer.setData("text/plain", square);
+                        }}
+                      >
+                        <ChessPieceSvg color={piece.color} type={piece.type} />
+                      </span>
+                    ) : null}
+
+                    {isPromotionSquare ? (
+                      <div
+                        className={`promotion-tile-picker promotion-tile-picker-${promotionPosition.direction}`}
+                      >
+                        {promotionChoices.map((move) => (
+                          <button
+                            aria-label={`Promote to ${move.promotion ?? "q"}`}
+                            className="promotion-square"
+                            key={move.promotion ?? move.lan}
+                            onClick={() => {
+                              void submitBoardMove(move);
+                            }}
+                            type="button"
+                          >
+                            <ChessPieceSvg
+                              color={(clientColor ?? "w") as "w" | "b"}
+                              type={
+                                (move.promotion ?? "q") as "p" | "n" | "b" | "r" | "q" | "k"
+                              }
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+
+              {pendingPromotion ? (
+                <button
+                  aria-label={`Close ${pendingPromotion.mode} choices`}
+                  className="promotion-backdrop"
+                  onClick={() => {
+                    setPendingPromotion(null);
+                    setSelectedSquare(null);
+                    setDragSource(null);
+                  }}
+                  type="button"
+                />
+              ) : null}
+            </div>
+          </section>
+        </div>
+
+        <aside className="glass-panel game-table-column">
+          {renderTableMaterial("top", topPlayer)}
+          {renderTableClock("top", topPlayer)}
+          {renderTableUser("top", topPlayer, topPlayerName, topPlayerInitials, topDisplayedRating)}
+
+          <div className="game-table-stack">
+            {openingCountdownMs !== null ? (
+              <div className="notice opening-side-note">
+                Opening phase: {openingInstruction.toLowerCase()} in {openingCountdownLabel} or that
+                player loses on time automatically.
+              </div>
+            ) : null}
+
+            <div
+              className={`status-banner game-desk-alert ${status !== "ACTIVE" ? "finished" : ""} ${isClientInCheck ? "danger" : ""}`}
+            >
+              <span>{statusHeadline}</span>
+              {inCheck && status === "ACTIVE" ? <strong>Check</strong> : null}
+            </div>
+
+            <div className="game-desk-moves game-table-moves">
+              {groupedMoves.length ? (
+                groupedMoves.map((row) => {
+                  const rowIsLatest =
+                    currentMovePly !== null && row.turn === Math.ceil(currentMovePly / 2);
+
+                  return (
+                    <div className={`game-desk-move-row${rowIsLatest ? " active" : ""}`} key={row.turn}>
+                      <strong>{row.turn}.</strong>
+                      <span>{row.white ?? "..."}</span>
+                      <span>{row.black ?? "..."}</span>
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="muted">No moves played yet.</p>
+              )}
+            </div>
+
+            <div className="detail-stack game-table-meta">
+              <div className="pill">{rated ? "Rated" : "Casual"}</div>
+              <div className="pill">Turn: {turnColor}</div>
+              {lastMove ? <div className="pill">Last move: {lastMove.san}</div> : null}
+              {activeQueuedPremoves.length ? <div className="pill">Premoves: {activeQueuedPremoves.length}</div> : null}
+            </div>
+
+            {queuedPremoveLabel ? <p className="muted premove-queue">{queuedPremoveLabel}</p> : null}
+            {drawnArrows.length || markedSquares.length ? (
+              <p className="muted premove-queue">
+                Draw the same arrow again to remove it, right-click the same square to unmark it, or
+                press Esc to clear all annotations.
+              </p>
+            ) : null}
+          </div>
+
+          <div className="action-row game-table-actions">
             <button
               className="secondary-button"
-              disabled={isSubmittingMove}
-              onClick={clearAnnotations}
+              disabled={status !== "ACTIVE" || isSubmittingMove}
+              onClick={() => void onResign()}
               type="button"
             >
-              Clear annotations
+              Resign
             </button>
-          ) : null}
-        </div>
+            <button
+              className="secondary-button"
+              onClick={() => setIsBoardFlipped((current) => !current)}
+              type="button"
+            >
+              Flip Board
+            </button>
+            {activeQueuedPremoves.length ? (
+              <button
+                className="secondary-button premove-clear-button"
+                disabled={isSubmittingMove}
+                onClick={clearQueuedPremove}
+                type="button"
+              >
+                Clear premove
+              </button>
+            ) : null}
+            {drawnArrows.length || markedSquares.length ? (
+              <button
+                className="secondary-button"
+                disabled={isSubmittingMove}
+                onClick={clearAnnotations}
+                type="button"
+              >
+                Clear annotations
+              </button>
+            ) : null}
+          </div>
 
-        {queuedPremoveLabel ? <p className="muted premove-queue">{queuedPremoveLabel}</p> : null}
-        {drawnArrows.length || markedSquares.length ? (
-          <p className="muted premove-queue">
-            Draw the same arrow again to remove it, right-click the same square to unmark it, or
-            press Esc to clear all annotations.
-          </p>
-        ) : null}
-
-        <div className="move-list">
-          {groupedMoves.length ? (
-            groupedMoves.map((row) => (
-              <div className="move-row" key={row.turn}>
-                <strong>{row.turn}.</strong>
-                <span>{row.white ?? "..."}</span>
-                <span>{row.black ?? ""}</span>
-              </div>
-            ))
-          ) : (
-            <p className="muted">No moves played yet.</p>
-          )}
-        </div>
-      </aside>
+          {renderTableUser("bottom", bottomPlayer, bottomPlayerName, bottomPlayerInitials, bottomDisplayedRating)}
+          {renderTableClock("bottom", bottomPlayer)}
+          {renderTableMaterial("bottom", bottomPlayer)}
+        </aside>
+      </div>
     </div>
   );
 }

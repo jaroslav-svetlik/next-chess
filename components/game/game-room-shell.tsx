@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { LiveBoard } from "@/components/game/live-board";
 import { buildDemoHeaders, buildDemoUrl, loadStoredDemoIdentity } from "@/lib/dev-auth";
-import { WAITING_ROOM_HEARTBEAT_MS } from "@/lib/game-timing";
+import { WAITING_ROOM_HEARTBEAT_MS, WAITING_ROOM_SYNC_MS } from "@/lib/game-timing";
 import { useGameSoundEffects } from "@/lib/use-game-sound-effects";
 import { useRealtimeChannel } from "@/lib/use-realtime-channel";
 
@@ -131,6 +131,7 @@ export function GameRoomShell({ gameId }: GameRoomShellProps) {
   const latestActorRef = useRef<GameActor>(null);
   const hasQueuedAutoCancelRef = useRef(false);
   const moveRequestInFlightRef = useRef(false);
+  const waitingRoomSyncInFlightRef = useRef(false);
   const telemetryTurnKeyRef = useRef<string | null>(null);
   const telemetryTurnStartedAtRef = useRef<number | null>(null);
   const turnBlurCountRef = useRef(0);
@@ -652,6 +653,52 @@ export function GameRoomShell({ gameId }: GameRoomShellProps) {
       });
     }
   });
+
+  useEffect(() => {
+    if (game?.status !== "WAITING") {
+      return;
+    }
+
+    let isCancelled = false;
+
+    async function syncWaitingRoom() {
+      if (waitingRoomSyncInFlightRef.current) {
+        return;
+      }
+
+      waitingRoomSyncInFlightRef.current = true;
+
+      try {
+        await loadGame();
+      } catch (syncError) {
+        if (!isCancelled) {
+          setError(syncError instanceof Error ? syncError.message : "Unable to sync game room.");
+        }
+      } finally {
+        waitingRoomSyncInFlightRef.current = false;
+      }
+    }
+
+    const syncInterval = window.setInterval(() => {
+      void syncWaitingRoom();
+    }, WAITING_ROOM_SYNC_MS);
+
+    function handleVisibleAgain() {
+      if (!document.hidden) {
+        void syncWaitingRoom();
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibleAgain);
+    window.addEventListener("focus", handleVisibleAgain);
+
+    return () => {
+      isCancelled = true;
+      window.clearInterval(syncInterval);
+      document.removeEventListener("visibilitychange", handleVisibleAgain);
+      window.removeEventListener("focus", handleVisibleAgain);
+    };
+  }, [game?.status, gameId]);
 
   useEffect(() => {
     if (!actor || !game || !currentPlayerColor) {

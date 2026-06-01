@@ -8,6 +8,22 @@ Version source of truth:
 
 The project is still in `0.x`, so versions represent active alpha milestones and can change quickly.
 
+## [0.6.21] - 2026-06-01
+
+Production hotfix focused on live-game room reliability and the refreshed board/replay experience.
+
+### Changed
+
+- updated [components/game/live-board.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/game/live-board.tsx), [components/game/game-replay-shell.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/game/game-replay-shell.tsx), [app/game/[gameId]/page.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/game/[gameId]/page.tsx), [app/archive/[gameId]/page.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/archive/[gameId]/page.tsx), and [app/globals.css](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/globals.css) with a more compact live board and replay desk layout, better player rails, board flip support, live side feed, and cleaner archive/game page framing
+- updated [app/api/lobby/route.ts](/Users/jaroslavsvetlik/Documents/NextJS/chess/app/api/lobby/route.ts) so in-progress game counts only include games where both seated players are recently connected, keeping the lobby/home activity metric closer to real live play
+- updated [components/home/home-arena-shell.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/home/home-arena-shell.tsx) so guest home previews stay generic and online indicators render with dedicated status-dot styling
+- updated [package.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package.json) so local dev uses `WATCHPACK_POLLING=true` with the custom WebSocket server entrypoint
+- bumped the runtime version in [package.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package.json) to `0.6.21`, updated the root package version in [package-lock.json](/Users/jaroslavsvetlik/Documents/NextJS/chess/package-lock.json), and refreshed the reported version in [README.md](/Users/jaroslavsvetlik/Documents/NextJS/chess/README.md)
+
+### Fixed
+
+- updated [components/game/game-room-shell.tsx](/Users/jaroslavsvetlik/Documents/NextJS/chess/components/game/game-room-shell.tsx) and [lib/game-timing.ts](/Users/jaroslavsvetlik/Documents/NextJS/chess/lib/game-timing.ts) so waiting rooms periodically refetch while queued and sync again on focus, preventing the creator tab from staying stuck on `Searching for an opponent` if the WebSocket start event is missed
+
 ## [0.6.20] - 2026-03-23
 
 Navigation polish release focused on exposing the public GitHub repository directly from the site header.
